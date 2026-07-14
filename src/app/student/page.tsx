@@ -69,6 +69,17 @@ export default function StudentPortal() {
    const handleCreateGroup = async () => {
       if (!newGroupName || !activeCourseId) return;
       setGroupLoading(true);
+      const { data: existingMember } = await supabase
+         .from('group_members')
+         .select('group_id, groups!inner(course_id)')
+         .eq('student_id', user.id)
+         .eq('groups.course_id', activeCourseId)
+         .maybeSingle();
+      if (existingMember) {
+         showToast("You are already in a group for this course. Please leave it first.", "error");
+         setGroupLoading(false);
+         return;
+      }
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const { data: groupData, error: groupError } = await supabase.from('groups').insert([{
          course_id: activeCourseId,
@@ -92,6 +103,17 @@ export default function StudentPortal() {
    const handleJoinGroup = async () => {
       if (!groupInviteInput || !activeCourseId) return;
       setGroupLoading(true);
+      const { data: existingMember } = await supabase
+         .from('group_members')
+         .select('group_id, groups!inner(course_id)')
+         .eq('student_id', user.id)
+         .eq('groups.course_id', activeCourseId)
+         .maybeSingle();
+      if (existingMember) {
+         showToast("You are already in a group for this course. Please leave it first.", "error");
+         setGroupLoading(false);
+         return;
+      }
       const { data: groupData, error } = await supabase.from('groups').select('*').eq('invite_code', groupInviteInput.toUpperCase()).single();
       if (error || !groupData) {
          showToast("Invalid Invite Code — double-check with your leader.", "error");
@@ -128,12 +150,12 @@ export default function StudentPortal() {
           confirmLabel: "Leave Group",
           danger: true,
           onConfirm: async () => {
-             await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', myGroup.id);
              const { error } = await supabase.from('group_members').delete().eq('group_id', myGroup.id).eq('student_id', user.id);
              if (!error) {
                 // Check if group is empty now
                 const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', myGroup.id);
                 if (count === 0) {
+                   await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', myGroup.id);
                    await supabase.from('groups').delete().eq('id', myGroup.id);
                 } else if (myGroup.leader_id === user.id) {
                    const { data: nextMember } = await supabase.from('group_members').select('student_id').eq('group_id', myGroup.id).limit(1).maybeSingle();
@@ -152,7 +174,6 @@ export default function StudentPortal() {
           }
        });
     };
-
    const handleCancelBooking = async () => {
       const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
       if (!myCurrentBooking) return;
@@ -199,20 +220,25 @@ export default function StudentPortal() {
        return () => { supabase.removeChannel(channel); };
     }, [user?.id, activeCourseId]);
 
-   useEffect(() => {
-      if (viewState === 'WORKSPACE' && activeProject) {
-         const channel = supabase.channel('realtime_workspace_student')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'slots' }, () => { reloadSlots(); })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'waitlist_entries' }, () => {
-               if (activeProject) loadProjectData(activeProject);
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members' }, () => {
-               if (activeProject) loadProjectData(activeProject);
-            })
-            .subscribe();
-         return () => { supabase.removeChannel(channel); };
-      }
-   }, [viewState, activeProject?.id]);
+    useEffect(() => {
+       if (viewState === 'WORKSPACE' && activeProject && activeCourseId) {
+          const channel = supabase.channel('realtime_workspace_student')
+             .on('postgres_changes', { event: '*', schema: 'public', table: 'slots' }, () => { reloadSlots(); })
+             .on('postgres_changes', { event: '*', schema: 'public', table: 'waitlist_entries' }, () => {
+                if (activeProject) loadProjectData(activeProject);
+             })
+             .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, async () => {
+                const currentGroupId = await reloadGroupData(activeCourseId);
+                if (activeProject) loadProjectData(activeProject, currentGroupId);
+             })
+             .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members' }, async () => {
+                const currentGroupId = await reloadGroupData(activeCourseId);
+                if (activeProject) loadProjectData(activeProject, currentGroupId);
+             })
+             .subscribe();
+          return () => { supabase.removeChannel(channel); };
+       }
+    }, [viewState, activeProject?.id, activeCourseId]);
 
    const reloadSlots = async () => {
       if (!activeProject) return;
@@ -265,41 +291,45 @@ export default function StudentPortal() {
       }
    };
 
-   const enterWorkspace = async (courseId: string) => {
-      setActiveCourseId(courseId);
-      setViewState('WORKSPACE');
-      setGroupStep('choose');
+    const reloadGroupData = async (courseId: string) => {
+       const { data: memberData } = await supabase.from('group_members').select('group_id, groups(*)').eq('student_id', user.id);
+       const activeGroupLink: any = memberData?.find((m: any) => m.groups && m.groups.course_id === courseId);
+       let currentGroupId = null;
+       
+       if (activeGroupLink) {
+          currentGroupId = activeGroupLink.group_id;
+          const { data: membersData } = await supabase
+             .from('group_members')
+             .select('student_id, users(id, full_name, email)')
+             .eq('group_id', currentGroupId);
+          
+          const count = membersData?.length || 0;
+          setMyGroup({ ...activeGroupLink.groups, members: count || 1 });
+          setMyGroupMembers(membersData?.map((m: any) => m.users).filter(Boolean) || []);
+       } else {
+          setMyGroup(null);
+          setMyGroupMembers([]);
+       }
+       return currentGroupId;
+    };
 
-      // Load course-level group
-      const { data: memberData } = await supabase.from('group_members').select('group_id, groups(*)').eq('student_id', user.id);
-      const activeGroupLink: any = memberData?.find((m: any) => m.groups && m.groups.course_id === courseId);
-      let currentGroupId = null;
-      
-      if (activeGroupLink) {
-         currentGroupId = activeGroupLink.group_id;
-         const { data: membersData } = await supabase
-            .from('group_members')
-            .select('student_id, users(id, full_name, email)')
-            .eq('group_id', currentGroupId);
-         
-         const count = membersData?.length || 0;
-         setMyGroup({ ...activeGroupLink.groups, members: count || 1 });
-         setMyGroupMembers(membersData?.map((m: any) => m.users).filter(Boolean) || []);
-      } else {
-         setMyGroup(null);
-         setMyGroupMembers([]);
-      }
+    const enterWorkspace = async (courseId: string) => {
+       setActiveCourseId(courseId);
+       setViewState('WORKSPACE');
+       setGroupStep('choose');
 
-      const { data: projData } = await supabase.from('projects').select('*').eq('course_id', courseId).order('created_at', { ascending: false });
-      if (projData && projData.length > 0) {
-         setCourseProjects(projData);
-         await loadProjectData(projData[0], currentGroupId);
-      } else {
-         setCourseProjects([]);
-         setActiveProject(null);
-         setMyWaitlistEntry(null);
-      }
-   };
+       const currentGroupId = await reloadGroupData(courseId);
+
+       const { data: projData } = await supabase.from('projects').select('*').eq('course_id', courseId).order('created_at', { ascending: false });
+       if (projData && projData.length > 0) {
+          setCourseProjects(projData);
+          await loadProjectData(projData[0], currentGroupId);
+       } else {
+          setCourseProjects([]);
+          setActiveProject(null);
+          setMyWaitlistEntry(null);
+       }
+    };
 
    const loadProjectData = async (project: any, forceGroupId?: string | null) => {
       setActiveProject(project);

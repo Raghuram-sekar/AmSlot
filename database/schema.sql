@@ -228,3 +228,52 @@ CREATE POLICY "Professors manage waitlist" ON public.waitlist_entries FOR ALL US
 CREATE POLICY "Groups manage own waitlist" ON public.waitlist_entries FOR ALL USING (
   EXISTS (SELECT 1 FROM public.group_members WHERE group_id = public.waitlist_entries.group_id AND student_id = auth.uid())
 );
+
+-- =========================================================================
+-- 12. TRIGGERS & FUNCTIONS
+-- =========================================================================
+
+-- ENFORCE SINGLE GROUP MEMBERSHIP PER COURSE
+CREATE OR REPLACE FUNCTION public.check_student_course_group()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_new_course_id UUID;
+  v_existing_group_name TEXT;
+BEGIN
+  SELECT course_id INTO v_new_course_id FROM public.groups WHERE id = NEW.group_id;
+
+  SELECT g.name INTO v_existing_group_name 
+  FROM public.group_members gm
+  JOIN public.groups g ON gm.group_id = g.id
+  WHERE gm.student_id = NEW.student_id AND g.course_id = v_new_course_id;
+
+  IF v_existing_group_name IS NOT NULL THEN
+    RAISE EXCEPTION 'You are already a member of group "%" in this course.', v_existing_group_name;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS check_student_course_group_trigger ON public.group_members;
+CREATE TRIGGER check_student_course_group_trigger
+BEFORE INSERT ON public.group_members
+FOR EACH ROW
+EXECUTE FUNCTION public.check_student_course_group();
+
+-- AUTO-CLEANUP SLOT STATUS ON GROUP DELETION
+CREATE OR REPLACE FUNCTION public.handle_deleted_group_cleanup()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.slots 
+  SET status = 'AVAILABLE', group_id = NULL
+  WHERE group_id = OLD.id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS handle_deleted_group_cleanup_trigger ON public.groups;
+CREATE TRIGGER handle_deleted_group_cleanup_trigger
+AFTER DELETE ON public.groups
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_deleted_group_cleanup();
