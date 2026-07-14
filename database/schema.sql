@@ -186,6 +186,7 @@ ALTER TABLE public.waitlist_entries ENABLE ROW LEVEL SECURITY;
 -- users: Users can read all users but only update themselves
 CREATE POLICY "Users can view all users" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Users can update themselves" ON public.users FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Enable insert for registration" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- courses: Professor-only control. Enrolled students can view.
 CREATE POLICY "Professors can manage their courses" ON public.courses FOR ALL USING (auth.uid() = professor_id);
