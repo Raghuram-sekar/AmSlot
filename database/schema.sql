@@ -171,15 +171,25 @@ ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.waitlist_entries ENABLE ROW LEVEL SECURITY;
 
+-- 13. Row Level Security (RLS) Policies
+-- Enable RLS on all tables
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.course_enrollments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.slots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_entries ENABLE ROW LEVEL SECURITY;
+
 -- users: Users can read all users but only update themselves
 CREATE POLICY "Users can view all users" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Users can update themselves" ON public.users FOR UPDATE USING (auth.uid() = id);
 
 -- courses: Professor-only control. Enrolled students can view.
 CREATE POLICY "Professors can manage their courses" ON public.courses FOR ALL USING (auth.uid() = professor_id);
-CREATE POLICY "Enrolled students can view courses" ON public.courses FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.course_enrollments WHERE course_id = public.courses.id AND student_id = auth.uid())
-);
+CREATE POLICY "Anyone can view courses" ON public.courses FOR SELECT TO authenticated USING (true);
 
 -- course_enrollments: Professors manage. Students can read their own.
 CREATE POLICY "Professors view enrollments" ON public.course_enrollments FOR ALL USING (
@@ -201,9 +211,12 @@ CREATE POLICY "Professors manage groups" ON public.groups FOR ALL USING (
   EXISTS (SELECT 1 FROM public.courses c WHERE c.id = public.groups.course_id AND c.professor_id = auth.uid())
 );
 CREATE POLICY "Students manage their groups" ON public.groups FOR ALL USING (auth.uid() = leader_id);
-CREATE POLICY "Members view group" ON public.groups FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.group_members WHERE group_id = public.groups.id AND student_id = auth.uid())
-);
+CREATE POLICY "Anyone can view groups" ON public.groups FOR SELECT TO authenticated USING (true);
+
+-- group_members: Students join groups, leave groups, and view members.
+CREATE POLICY "Anyone can view group members" ON public.group_members FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Students can join groups" ON public.group_members FOR INSERT TO authenticated WITH CHECK (student_id = auth.uid());
+CREATE POLICY "Students can leave groups" ON public.group_members FOR DELETE TO authenticated USING (student_id = auth.uid());
 
 -- events: Professor-only control. Enrolled students view.
 CREATE POLICY "Professors manage events" ON public.events FOR ALL USING (
@@ -219,6 +232,15 @@ CREATE POLICY "Professors manage slots" ON public.slots FOR ALL USING (
 );
 CREATE POLICY "Students view and book slots" ON public.slots FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.events e JOIN public.projects p ON e.project_id = p.id JOIN public.course_enrollments ce ON p.course_id = ce.course_id WHERE e.id = public.slots.event_id AND ce.student_id = auth.uid())
+);
+CREATE POLICY "Students can update own group slots" ON public.slots 
+FOR UPDATE 
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.groups g 
+    WHERE g.id = public.slots.group_id AND g.leader_id = auth.uid()
+  )
 );
 
 -- waitlist_entries: Members view/update own. Professors view all.
