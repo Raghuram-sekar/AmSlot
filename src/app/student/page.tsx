@@ -67,11 +67,11 @@ export default function StudentPortal() {
    // ─── Handlers ───────────────────────────────────────────────────────────────
 
    const handleCreateGroup = async () => {
-      if (!newGroupName || !activeProject) return;
+      if (!newGroupName || !activeCourseId) return;
       setGroupLoading(true);
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const { data: groupData, error: groupError } = await supabase.from('groups').insert([{
-         project_id: activeProject.id,
+         course_id: activeCourseId,
          name: newGroupName,
          leader_id: user.id,
          invite_code: inviteCode
@@ -90,7 +90,7 @@ export default function StudentPortal() {
    };
 
    const handleJoinGroup = async () => {
-      if (!groupInviteInput || !activeProject) return;
+      if (!groupInviteInput || !activeCourseId) return;
       setGroupLoading(true);
       const { data: groupData, error } = await supabase.from('groups').select('*').eq('invite_code', groupInviteInput.toUpperCase()).single();
       if (error || !groupData) {
@@ -99,8 +99,8 @@ export default function StudentPortal() {
          return;
       }
       const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', groupData.id);
-      if (count && count >= (activeProject.max_group_size || 5)) {
-         showToast(`Group is full (max ${activeProject.max_group_size || 5} members).`, "error");
+      if (count && count >= (activeProject?.max_group_size || 5)) {
+         showToast(`Group is full (max ${activeProject?.max_group_size || 5} members).`, "error");
          setGroupLoading(false);
          return;
       }
@@ -242,41 +242,51 @@ export default function StudentPortal() {
       setActiveCourseId(courseId);
       setViewState('WORKSPACE');
       setGroupStep('choose');
-      const { data: projData } = await supabase.from('projects').select('*').eq('course_id', courseId).order('created_at', { ascending: false });
-      if (projData && projData.length > 0) {
-         setCourseProjects(projData);
-         await loadProjectData(projData[0]);
-      } else {
-         setCourseProjects([]);
-         setActiveProject(null);
-         setMyGroup(null);
-         setMyWaitlistEntry(null);
-      }
-   };
 
-   const loadProjectData = async (project: any) => {
-      setActiveProject(project);
-      setSelectedSlot(null);
-      setGroupStep('choose');
+      // Load course-level group
       const { data: memberData } = await supabase.from('group_members').select('group_id, groups(*)').eq('student_id', user.id);
-      const activeGroupLink: any = memberData?.find((m: any) => m.groups && m.groups.project_id === project.id);
+      const activeGroupLink: any = memberData?.find((m: any) => m.groups && m.groups.course_id === courseId);
+      let currentGroupId = null;
+      
       if (activeGroupLink) {
+         currentGroupId = activeGroupLink.group_id;
          const { data: membersData } = await supabase
             .from('group_members')
             .select('student_id, users(id, full_name, email)')
-            .eq('group_id', activeGroupLink.group_id);
+            .eq('group_id', currentGroupId);
          
          const count = membersData?.length || 0;
          setMyGroup({ ...activeGroupLink.groups, members: count || 1 });
          setMyGroupMembers(membersData?.map((m: any) => m.users).filter(Boolean) || []);
-
-         const { data: wlData } = await supabase.from('waitlist_entries').select('*').eq('group_id', activeGroupLink.group_id).eq('project_id', project.id).maybeSingle();
-         setMyWaitlistEntry(wlData || null);
       } else {
          setMyGroup(null);
          setMyGroupMembers([]);
+      }
+
+      const { data: projData } = await supabase.from('projects').select('*').eq('course_id', courseId).order('created_at', { ascending: false });
+      if (projData && projData.length > 0) {
+         setCourseProjects(projData);
+         await loadProjectData(projData[0], currentGroupId);
+      } else {
+         setCourseProjects([]);
+         setActiveProject(null);
          setMyWaitlistEntry(null);
       }
+   };
+
+   const loadProjectData = async (project: any, forceGroupId?: string | null) => {
+      setActiveProject(project);
+      setSelectedSlot(null);
+      setGroupStep('choose');
+      
+      const targetGroupId = forceGroupId !== undefined ? forceGroupId : myGroup?.id;
+      if (targetGroupId) {
+         const { data: wlData } = await supabase.from('waitlist_entries').select('*').eq('group_id', targetGroupId).eq('project_id', project.id).maybeSingle();
+         setMyWaitlistEntry(wlData || null);
+      } else {
+         setMyWaitlistEntry(null);
+      }
+
       const { data: evData } = await supabase.from('events').select('*').eq('project_id', project.id).order('date', { ascending: true });
       if (evData && evData.length > 0) {
          setEvents(evData);
@@ -691,19 +701,20 @@ export default function StudentPortal() {
             {viewState === 'WORKSPACE' && activeCourse && (
                <div className="animate-fade-in-up">
 
-                  {/* Scenario 0: No project yet */}
-                  {!activeProject && (
+                  {/* Scenario 0: Has group, but no project yet */}
+                  {myGroup && !activeProject && (
                      <div style={{ maxWidth: '560px', margin: '6rem auto 0', textAlign: 'center' }}>
-                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: 'rgba(255,255,255,0.2)' }}>
-                           <Hourglass size={36} />
+                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', color: '#34d399' }}>
+                           <CheckCircle2 size={36} />
                         </div>
-                        <h2 style={{ color: '#fff', fontSize: '2rem', fontWeight: 900, marginBottom: '0.75rem' }}>Waiting for Professor</h2>
-                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1.05rem', lineHeight: 1.6 }}>No active assignments have been posted yet. Check back soon!</p>
+                        <h2 style={{ color: '#fff', fontSize: '2rem', fontWeight: 900, marginBottom: '0.75rem' }}>Squad Ready!</h2>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>Your squad <strong>"{myGroup.name}"</strong> has been successfully formed.</p>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.95rem' }}>Waiting for the professor to post assignments or slots. Check back soon!</p>
                      </div>
                   )}
 
                   {/* Scenario A: No group — Interactive Wizard */}
-                  {!myGroup && activeProject && (
+                  {!myGroup && (
                      <div style={{ maxWidth: '640px', margin: '3rem auto 0' }}>
                         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                            <div style={{ width: '72px', height: '72px', borderRadius: '24px', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: 'var(--primary)' }}>
@@ -711,7 +722,7 @@ export default function StudentPortal() {
                            </div>
                            <h1 style={{ fontSize: '2.25rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-outfit)' }}>Join a Team</h1>
                            <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '0.75rem', fontSize: '1rem' }}>
-                              You need a team for <strong style={{ color: '#fff' }}>"{activeProject?.title}"</strong> before booking.
+                              You need a team for {activeProject ? <strong style={{ color: '#fff' }}>"{activeProject.title}"</strong> : 'this course'} before booking.
                            </p>
                         </div>
 

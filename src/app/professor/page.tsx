@@ -224,37 +224,25 @@ export default function ProfessorDashboard() {
     if (!cid) return;
     setGroupsLoading(true);
 
-    // Fetch project IDs fresh from DB
-    const { data: projectRows } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('course_id', cid);
-
-    const projectIds = (projectRows || []).map((p: any) => p.id);
-    if (projectIds.length === 0) { setCourseGroups([]); setGroupsLoading(false); return; }
-
-    // Fetch groups with member details
-    // group_members uses student_id FK → users table
+    // Fetch groups with member details directly by course_id
     const { data: groupsData, error: groupsError } = await supabase
       .from('groups')
       .select(`
-        id, name, created_at, project_id, leader_id,
-        projects(title),
+        id, name, created_at, course_id, leader_id,
         group_members(student_id, users!group_members_student_id_fkey(id, full_name))
       `)
-      .in('project_id', projectIds)
+      .eq('course_id', cid)
       .order('created_at', { ascending: false });
 
     if (groupsError) {
       // Fallback: simpler query without nested join if FK hint fails
       const { data: simpleGroups } = await supabase
         .from('groups')
-        .select(`id, name, created_at, project_id, leader_id, projects(title)`)
-        .in('project_id', projectIds)
+        .select(`id, name, created_at, course_id, leader_id`)
+        .eq('course_id', cid)
         .order('created_at', { ascending: false });
 
       if (simpleGroups) {
-        // Enrich each group with members separately
         const enriched = await Promise.all(simpleGroups.map(async (grp: any) => {
           const { data: members } = await supabase
             .from('group_members')
@@ -1159,7 +1147,7 @@ export default function ProfessorDashboard() {
                     <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
                        {/* Header Row */}
                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 0.5fr', padding: '1rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
-                         <span>Group Name</span><span>Assignment</span><span>Members</span><span style={{ textAlign: 'right' }}>Details</span>
+                         <span>Group Name</span><span>Invite Code</span><span>Members</span><span style={{ textAlign: 'right' }}>Details</span>
                        </div>
                        
                        {groupsLoading ? (
@@ -1184,10 +1172,10 @@ export default function ProfessorDashboard() {
                                   >
                                     <div>
                                       <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.05rem' }}>{grp.name}</div>
-                                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.15rem' }}>{grp.projects?.title || '—'}</div>
+                                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.15rem' }}>Created: {new Date(grp.created_at).toLocaleDateString()}</div>
                                     </div>
                                     <div>
-                                      <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem' }}>{grp.projects?.title || 'Unknown'}</span>
+                                      <span className="badge" style={{ background: 'transparent', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', fontSize: '0.75rem', margin: 0 }}>{grp.invite_code}</span>
                                     </div>
                                     <div style={{ color: 'var(--primary)', fontWeight: 800 }}>{members.length} member{members.length !== 1 ? 's' : ''}</div>
                                     <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.4)' }}>

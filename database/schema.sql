@@ -50,10 +50,10 @@ CREATE TABLE public.projects (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 6. Groups (Formed specifically under a project)
+-- 6. Groups (Formed under a course)
 CREATE TABLE public.groups (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
+  course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   leader_id UUID REFERENCES public.users(id),
   invite_code TEXT UNIQUE NOT NULL, -- Added for joining friends
@@ -198,7 +198,7 @@ CREATE POLICY "Students view projects" ON public.projects FOR SELECT USING (
 
 -- groups: Professor-only control. Group members view.
 CREATE POLICY "Professors manage groups" ON public.groups FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.projects p JOIN public.courses c ON p.course_id = c.id WHERE p.id = public.groups.project_id AND c.professor_id = auth.uid())
+  EXISTS (SELECT 1 FROM public.courses c WHERE c.id = public.groups.course_id AND c.professor_id = auth.uid())
 );
 CREATE POLICY "Students manage their groups" ON public.groups FOR ALL USING (auth.uid() = leader_id);
 CREATE POLICY "Members view group" ON public.groups FOR SELECT USING (
