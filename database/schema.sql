@@ -184,12 +184,15 @@ ALTER TABLE public.slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.waitlist_entries ENABLE ROW LEVEL SECURITY;
 
 -- users: Users can read all users but only update themselves
-CREATE POLICY "Users can view all users" ON public.users FOR SELECT USING (true);
-CREATE POLICY "Users can update themselves" ON public.users FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Enable insert for registration" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can view all users" ON public.users FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "Users can update themselves" ON public.users FOR UPDATE TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Enable insert for registration" ON public.users FOR INSERT TO authenticated, anon WITH CHECK (auth.uid() = id);
 
 -- courses: Professor-only control. Enrolled students can view.
-CREATE POLICY "Professors can manage their courses" ON public.courses FOR ALL USING (auth.uid() = professor_id);
+CREATE POLICY "Professors can insert courses" ON public.courses FOR INSERT TO authenticated WITH CHECK (auth.uid() = professor_id);
+CREATE POLICY "Professors can select courses" ON public.courses FOR SELECT TO authenticated USING (auth.uid() = professor_id);
+CREATE POLICY "Professors can update courses" ON public.courses FOR UPDATE TO authenticated USING (auth.uid() = professor_id) WITH CHECK (auth.uid() = professor_id);
+CREATE POLICY "Professors can delete courses" ON public.courses FOR DELETE TO authenticated USING (auth.uid() = professor_id);
 CREATE POLICY "Anyone can view courses" ON public.courses FOR SELECT TO authenticated USING (true);
 
 -- course_enrollments: Professors manage. Students can read their own.
@@ -200,8 +203,19 @@ CREATE POLICY "Students join courses" ON public.course_enrollments FOR INSERT WI
 CREATE POLICY "Students view own enrollment" ON public.course_enrollments FOR SELECT USING (student_id = auth.uid());
 
 -- projects: Professor-only control. Enrolled students view.
-CREATE POLICY "Professors manage projects" ON public.projects FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.courses WHERE id = public.projects.course_id AND professor_id = auth.uid())
+CREATE POLICY "Professors can insert projects" ON public.projects FOR INSERT TO authenticated WITH CHECK (
+  EXISTS (SELECT 1 FROM public.courses WHERE id = course_id AND professor_id = auth.uid())
+);
+CREATE POLICY "Professors can select projects" ON public.projects FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM public.courses WHERE id = course_id AND professor_id = auth.uid())
+);
+CREATE POLICY "Professors can update projects" ON public.projects FOR UPDATE TO authenticated USING (
+  EXISTS (SELECT 1 FROM public.courses WHERE id = course_id AND professor_id = auth.uid())
+) WITH CHECK (
+  EXISTS (SELECT 1 FROM public.courses WHERE id = course_id AND professor_id = auth.uid())
+);
+CREATE POLICY "Professors can delete projects" ON public.projects FOR DELETE TO authenticated USING (
+  EXISTS (SELECT 1 FROM public.courses WHERE id = course_id AND professor_id = auth.uid())
 );
 CREATE POLICY "Students view projects" ON public.projects FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.course_enrollments WHERE course_id = public.projects.course_id AND student_id = auth.uid())
@@ -220,16 +234,83 @@ CREATE POLICY "Students can join groups" ON public.group_members FOR INSERT TO a
 CREATE POLICY "Students can leave groups" ON public.group_members FOR DELETE TO authenticated USING (student_id = auth.uid());
 
 -- events: Professor-only control. Enrolled students view.
-CREATE POLICY "Professors manage events" ON public.events FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.projects p JOIN public.courses c ON p.course_id = c.id WHERE p.id = public.events.project_id AND c.professor_id = auth.uid())
+CREATE POLICY "Professors can insert events" ON public.events FOR INSERT TO authenticated WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.projects p 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE p.id = project_id AND c.professor_id = auth.uid()
+  )
+);
+CREATE POLICY "Professors can select events" ON public.events FOR SELECT TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.projects p 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE p.id = project_id AND c.professor_id = auth.uid()
+  )
+);
+CREATE POLICY "Professors can update events" ON public.events FOR UPDATE TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.projects p 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE p.id = project_id AND c.professor_id = auth.uid()
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.projects p 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE p.id = project_id AND c.professor_id = auth.uid()
+  )
+);
+CREATE POLICY "Professors can delete events" ON public.events FOR DELETE TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.projects p 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE p.id = project_id AND c.professor_id = auth.uid()
+  )
 );
 CREATE POLICY "Students view events" ON public.events FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.projects p JOIN public.course_enrollments ce ON p.course_id = ce.course_id WHERE p.id = public.events.project_id AND ce.student_id = auth.uid())
 );
 
 -- slots: Professor-only control. Students can read and update (if available).
-CREATE POLICY "Professors manage slots" ON public.slots FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.events e JOIN public.projects p ON e.project_id = p.id JOIN public.courses c ON p.course_id = c.id WHERE e.id = public.slots.event_id AND c.professor_id = auth.uid())
+CREATE POLICY "Professors can insert slots" ON public.slots FOR INSERT TO authenticated WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.events e 
+    JOIN public.projects p ON e.project_id = p.id 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE e.id = event_id AND c.professor_id = auth.uid()
+  )
+);
+CREATE POLICY "Professors can select slots" ON public.slots FOR SELECT TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.events e 
+    JOIN public.projects p ON e.project_id = p.id 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE e.id = event_id AND c.professor_id = auth.uid()
+  )
+);
+CREATE POLICY "Professors can update slots" ON public.slots FOR UPDATE TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.events e 
+    JOIN public.projects p ON e.project_id = p.id 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE e.id = event_id AND c.professor_id = auth.uid()
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.events e 
+    JOIN public.projects p ON e.project_id = p.id 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE e.id = event_id AND c.professor_id = auth.uid()
+  )
+);
+CREATE POLICY "Professors can delete slots" ON public.slots FOR DELETE TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM public.events e 
+    JOIN public.projects p ON e.project_id = p.id 
+    JOIN public.courses c ON p.course_id = c.id 
+    WHERE e.id = event_id AND c.professor_id = auth.uid()
+  )
 );
 CREATE POLICY "Students view and book slots" ON public.slots FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.events e JOIN public.projects p ON e.project_id = p.id JOIN public.course_enrollments ce ON p.course_id = ce.course_id WHERE e.id = public.slots.event_id AND ce.student_id = auth.uid())
@@ -300,3 +381,33 @@ CREATE TRIGGER handle_deleted_group_cleanup_trigger
 AFTER DELETE ON public.groups
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_deleted_group_cleanup();
+
+
+-- 14. Self-Healing profile creator function
+CREATE OR REPLACE FUNCTION public.create_my_profile()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_role TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+  
+  v_role := COALESCE(auth.jwt()->'user_metadata'->>'role', 'PROFESSOR');
+  
+  INSERT INTO public.users (id, full_name, email, role)
+  VALUES (
+    auth.uid(),
+    COALESCE(auth.jwt()->'user_metadata'->>'full_name', 'Professor Raghuram'),
+    auth.jwt()->>'email',
+    v_role
+  )
+  ON CONFLICT (id) DO UPDATE 
+  SET role = v_role;
+  
+  RETURN TRUE;
+END;
+$$;
