@@ -599,7 +599,7 @@ export default function StudentPortal() {
          {/* ═══════════════════════════════════════════════
           MAIN CONTENT
           ═══════════════════════════════════════════════ */}
-         <main style={{ flex: 1, padding: '3rem 4rem', position: 'relative', overflowY: 'auto', height: '100vh' }}>
+         <main style={{ flex: 1, padding: '3rem 4rem', position: 'relative', overflowX: 'hidden', overflowY: 'auto', height: '100vh' }}>
             <div className="fluid-blob blob-2" style={{ opacity: 0.12, top: '20%', left: '30%' }}></div>
 
             {/* ──────────────────────────────────────────────
