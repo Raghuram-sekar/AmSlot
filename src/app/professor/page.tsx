@@ -854,11 +854,47 @@ const CourseSkeleton = () => (
 
                {activeTab === 'schedule' && (
                  <div>
-                    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
+                    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem', gap: '2rem', flexWrap: 'wrap' }}>
                       <div>
                         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0 }}>Review Timeline</h1>
                         <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem', maxWidth: '600px' }}>Your central overview covering all slots inside this active workspace.</p>
                       </div>
+                      
+                      {/* Assignment Filter Selector Dropdown */}
+                      {projects.length > 0 && (
+                         <div style={{ position: 'relative', minWidth: '220px' }}>
+                            <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                               <BookOpen size={16} />
+                            </div>
+                            <select 
+                               value={filterProjectId} 
+                               onChange={(e) => setFilterProjectId(e.target.value)}
+                               style={{ 
+                                  width: '100%',
+                                  padding: '0.875rem 2.5rem 0.875rem 2.5rem', 
+                                  background: 'rgba(255,255,255,0.03)', 
+                                  border: '1px solid rgba(255,255,255,0.08)', 
+                                  borderRadius: '14px', 
+                                  color: '#fff', 
+                                  outline: 'none', 
+                                  fontWeight: 700, 
+                                  fontSize: '0.9rem', 
+                                  cursor: 'pointer',
+                                  appearance: 'none',
+                                  transition: 'all 0.2s',
+                                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                               }}
+                            >
+                               <option value="ALL" style={{ background: '#120d1d', color: '#fff' }}>All Assignments</option>
+                               {projects.map(p => (
+                                  <option key={p.id} value={p.id} style={{ background: '#120d1d', color: '#fff' }}>{p.title}</option>
+                               ))}
+                            </select>
+                            <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }}>
+                               <ChevronDown size={16} />
+                            </div>
+                         </div>
+                      )}
                     </header>
 
                     {scheduleLoading ? (
@@ -872,8 +908,8 @@ const CourseSkeleton = () => (
                         <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
                            <div className="empty-state" style={{ padding: '4rem', textAlign: 'center' }}>
                               <div className="empty-state-icon" style={{ width: '64px', height: '64px', margin: '0 auto 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CalendarRange size={32} /></div>
-                              <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Timeline is Empty</h3>
-                              <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: '300px', margin: '0 auto' }}>Use the Slot Generator to mass-generate presentation blocks.</p>
+                              <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>{filterProjectId === 'ALL' ? 'Timeline is Empty' : 'No Slots for this Assignment'}</h3>
+                              <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: '350px', margin: '0 auto' }}>{filterProjectId === 'ALL' ? 'Use the Slot Generator to mass-generate presentation blocks.' : 'Select another filter or generate slots for this assignment in the Slot Generator tab.'}</p>
                            </div>
                         </div>
                      ) : (
