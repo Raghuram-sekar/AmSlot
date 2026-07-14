@@ -903,8 +903,8 @@ export default function StudentPortal() {
                      </div>
                   )}
 
-                  {/* Scenario B: In a group — Booking View */}
-                  {myGroup && (
+                  {/* ── BOOKING CALENDAR VIEW (Only if Active Project & Group exists) ── */}
+                  {myGroup && activeProject && (
                      <div className="animate-fade-in-up">
                         <header style={{ marginBottom: '2.5rem' }}>
                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', marginBottom: '1rem' }}>
