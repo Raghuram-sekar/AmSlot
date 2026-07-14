@@ -73,6 +73,18 @@ export default function ProfessorDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+     if (genStartDate && genEndDate) {
+        const available = getAvailableDaysInRange(genStartDate, genEndDate);
+        setGenSelectedDays(prev => {
+           const weekdays = available.filter(d => d !== 0 && d !== 6);
+           const defaultSelection = weekdays.length > 0 ? weekdays : available;
+           const filtered = prev.filter(d => available.includes(d));
+           return filtered.length > 0 ? filtered : defaultSelection;
+        });
+     }
+  }, [genStartDate, genEndDate]);
+
+  useEffect(() => {
      if (!courses.length) return;
 
      // 1. Initial check
@@ -545,7 +557,28 @@ export default function ProfessorDashboard() {
   };
 
   // --- SKELETON COMPONENTS ---
-  const CourseSkeleton = () => (
+    const getAvailableDaysInRange = (startStr: string, endStr: string) => {
+     if (!startStr || !endStr) return [0, 1, 2, 3, 4, 5, 6];
+     const start = new Date(startStr + 'T12:00:00');
+     const end = new Date(endStr + 'T12:00:00');
+     if (start > end) return [];
+     
+     const diffTime = Math.abs(end.getTime() - start.getTime());
+     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+     if (diffDays >= 6) {
+        return [0, 1, 2, 3, 4, 5, 6];
+     }
+     
+     const days: number[] = [];
+     let current = new Date(start);
+     while (current <= end) {
+        days.push(current.getDay());
+        current.setDate(current.getDate() + 1);
+     }
+     return Array.from(new Set(days));
+  };
+
+const CourseSkeleton = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>
       {[1, 2, 3].map(i => (
         <div key={i} className="skeleton" style={{ height: '240px', borderRadius: '24px' }} />
@@ -988,28 +1021,55 @@ export default function ProfessorDashboard() {
                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.75rem' }}>
                                 <div>
                                   <label style={{ display: 'block', fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: '0.5rem' }}>Start Date</label>
-                                  <input type="date" value={genStartDate} onChange={e=>setGenStartDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', outline: 'none' }} />
+                                  <input type="date" value={genStartDate} min={new Date().toISOString().split('T')[0]} onChange={e=>setGenStartDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', outline: 'none' }} />
                                 </div>
                                 <div>
                                   <label style={{ display: 'block', fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: '0.5rem' }}>End Date</label>
-                                  <input type="date" value={genEndDate} onChange={e=>setGenEndDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', outline: 'none' }} />
+                                  <input type="date" value={genEndDate} min={genStartDate || new Date().toISOString().split('T')[0]} onChange={e=>setGenEndDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', outline: 'none' }} />
                                 </div>
                              </div>
 
                              <label style={{ display: 'block', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800, marginBottom: '0.75rem' }}>Active Days</label>
-                             <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                {['S','M','T','W','T','F','S'].map((day, idx) => {
-                                   const fullDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][idx];
-                                   const isSelected = genSelectedDays.includes(idx);
-                                   const isWeekend = idx === 0 || idx === 6;
-                                   return (
-                                      <button key={idx} onClick={() => { isSelected ? setGenSelectedDays(genSelectedDays.filter(d=>d!==idx)) : setGenSelectedDays([...genSelectedDays, idx]); }} title={fullDay}
-                                         style={{ flex: 1, aspectRatio: '1', borderRadius: '10px', border: 'none', background: isSelected ? (isWeekend ? 'rgba(244,63,94,0.7)' : 'var(--primary)') : 'rgba(255,255,255,0.04)', color: isSelected ? '#fff' : 'rgba(255,255,255,0.2)', fontWeight: 900, cursor: 'pointer', transition: 'all 0.15s', fontSize: '0.8rem', boxShadow: isSelected ? (isWeekend ? '0 4px 12px rgba(244,63,94,0.3)' : '0 4px 12px rgba(139,92,246,0.3)') : 'none', transform: isSelected ? 'scale(1.08)' : 'scale(1)' }}>
-                                         {day}
-                                      </button>
-                                   );
-                                })}
-                             </div>
+                              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                 {['S','M','T','W','T','F','S'].map((day, idx) => {
+                                    const fullDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][idx];
+                                    const isAvailable = getAvailableDaysInRange(genStartDate, genEndDate).includes(idx);
+                                    const isSelected = isAvailable && genSelectedDays.includes(idx);
+                                    const isWeekend = idx === 0 || idx === 6;
+                                    return (
+                                       <button 
+                                          key={idx} 
+                                          disabled={!isAvailable}
+                                          type="button"
+                                          onClick={() => { 
+                                             if (isSelected) {
+                                                setGenSelectedDays(genSelectedDays.filter(d=>d!==idx));
+                                             } else {
+                                                setGenSelectedDays([...genSelectedDays, idx]);
+                                             }
+                                          }} 
+                                          title={isAvailable ? fullDay : `${fullDay} (Not in selected date range)`}
+                                          style={{ 
+                                             flex: 1, 
+                                             aspectRatio: '1', 
+                                             borderRadius: '10px', 
+                                             border: 'none', 
+                                             background: isSelected ? (isWeekend ? 'rgba(244,63,94,0.7)' : 'var(--primary)') : 'rgba(255,255,255,0.04)', 
+                                             color: isSelected ? '#fff' : 'rgba(255,255,255,0.2)', 
+                                             fontWeight: 900, 
+                                             cursor: isAvailable ? 'pointer' : 'not-allowed', 
+                                             transition: 'all 0.15s', 
+                                             fontSize: '0.8rem', 
+                                             boxShadow: isSelected ? (isWeekend ? '0 4px 12px rgba(244,63,94,0.3)' : '0 4px 12px rgba(139,92,246,0.3)') : 'none', 
+                                             transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                                             opacity: isAvailable ? 1 : 0.2
+                                          }}
+                                       >
+                                          {day}
+                                       </button>
+                                    );
+                                 })}
+                              </div>
                           </div>
 
                           {/* 3. Day Timeline Visualizer — THE STAR FEATURE */}
@@ -1120,137 +1180,226 @@ export default function ProfessorDashboard() {
                                 /* ✅ MISSION REPORT TERMINAL */
                                 <div className="animate-fade-in">
                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 12px #34d399' }} />
-                                      <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Mission Complete</span>
-                                   </div>
-                                   <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', lineHeight: '1.8', color: 'rgba(255,255,255,0.6)', background: 'rgba(0,0,0,0.3)', padding: '1.25rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
-                                      {missionReport.lines.map((line, i) => (
-                                         <div key={i} className="terminal-line" style={{ color: line.startsWith('✓') ? '#34d399' : line.startsWith('⚡') ? '#a78bfa' : line.startsWith('>>') ? '#fbbf24' : 'rgba(255,255,255,0.5)' }}>{line}</div>
-                                      ))}
-                                   </div>
-                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
-                                      <div>
-                                         <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{missionReport.totalSlots}</div>
-                                         <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>slots generated across {missionReport.totalDays} day{missionReport.totalDays !== 1 ? 's' : ''}</div>
-                                      </div>
-                                      <div style={{ textAlign: 'right' }}>
-                                         <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#a78bfa', lineHeight: 1 }}>{Math.round(missionReport.totalSlots / Math.max(1, missionReport.totalDays))}</div>
-                                         <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>slots/day avg</div>
-                                      </div>
-                                   </div>
-                                   <button onClick={() => setMissionReport(null)} style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>← Configure New Batch</button>
-                                </div>
+                                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: genLoading ? '#fbbf24' : '#34d399', boxShadow: genLoading ? '0 0 12px #fbbf24' : '0 0 12px #34d399' }} />
+                                      <span style={{ fontSize: '0.7rem', color: genLoading ? '#fbbf24' : '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{genLoading ? 'Processing Batch...' : 'Mission Complete'}</span>
+                                    </div>
+                                    <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', lineHeight: '1.8', color: 'rgba(255,255,255,0.6)', background: 'rgba(0,0,0,0.3)', padding: '1.25rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+                                       {missionReport.lines.map((line, i) => {
+                                          const getLineColor = (l: string) => {
+                                             if (l.startsWith('SUCCESS:')) return '#34d399';
+                                             if (l.startsWith('INFO:')) return '#c4b5fd';
+                                             if (l.startsWith('WARN:')) return '#fbbf24';
+                                             return 'rgba(255,255,255,0.5)';
+                                          };
+                                          const getCleanLineText = (l: string) => {
+                                             if (l.startsWith('SUCCESS:')) return '✓ ' + l.substring(8);
+                                             if (l.startsWith('INFO:')) return '⚡ ' + l.substring(5);
+                                             if (l.startsWith('WARN:')) return '» ' + l.substring(5);
+                                             return l;
+                                          };
+                                          return (
+                                             <div key={i} className="terminal-line" style={{ color: getLineColor(line) }}>
+                                                {getCleanLineText(line)}
+                                             </div>
+                                          );
+                                       })}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+                                       <div>
+                                          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{missionReport.totalSlots}</div>
+                                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>slots generated across {missionReport.totalDays} day{missionReport.totalDays !== 1 ? 's' : ''}</div>
+                                       </div>
+                                       <div style={{ textAlign: 'right' }}>
+                                          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#a78bfa', lineHeight: 1 }}>{Math.round(missionReport.totalSlots / Math.max(1, missionReport.totalDays))}</div>
+                                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>slots/day avg</div>
+                                       </div>
+                                    </div>
+                                    <button onClick={() => setMissionReport(null)} disabled={genLoading} style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, cursor: genLoading ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>← Configure New Batch</button>
+                                 </div>
                              ) : (
-                                /* 📡 IMPACT ESTIMATION */
-                                <div>
-                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)', animation: 'pulse 2s infinite' }} />
-                                      <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Live Estimation</span>
-                                   </div>
+                                 /* 📡 IMPACT ESTIMATION */
+                                 <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)', animation: 'pulse 2s infinite' }} />
+                                       <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Live Estimation</span>
+                                    </div>
+ 
+                                    {/* Slot count display */}
+                                    {(() => {
+                                       if (!genStartDate || !genEndDate || !genStart || !genEnd) return (
+                                          <div style={{ marginBottom: '2rem' }}>
+                                             <div style={{ fontSize: '4rem', fontWeight: 900, color: 'rgba(255,255,255,0.15)', lineHeight: 1, letterSpacing: '-0.03em' }}>—</div>
+                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.875rem', marginTop: '0.5rem' }}>Set dates to preview.</p>
+                                          </div>
+                                       );
+                                       const startD = new Date(genStartDate + 'T12:00:00');
+                                       const endD   = new Date(genEndDate + 'T12:00:00');
+                                       let dayCount = 0; let d = new Date(startD);
+                                       while (d <= endD) { if (genSelectedDays.includes(d.getDay())) dayCount++; d.setDate(d.getDate()+1); }
+                                       
+                                       const [sh, sm] = genStart.split(':').map(Number);
+                                       const [eh, em] = genEnd.split(':').map(Number);
+                                       let totalMins = (eh * 60 + em) - (sh * 60 + sm);
+                                       if (genLunchStart && genLunchEnd) {
+                                          const [lsh, lsm] = genLunchStart.split(':').map(Number);
+                                          const [leh, lem] = genLunchEnd.split(':').map(Number);
+                                          totalMins -= (leh * 60 + lem) - (lsh * 60 + lsm);
+                                       }
+                                       const perDay = Math.max(0, Math.floor(totalMins / (Number(genDuration) + Number(genBreak))));
+                                       const total  = dayCount * perDay;
+                                       return (
+                                          <div style={{ marginBottom: '2rem' }}>
+                                             <div style={{ fontSize: '4.5rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.03em' }}>{total}</div>
+                                             <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.75rem' }}>
+                                                <div><span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{dayCount}</span><span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginLeft: '0.3rem' }}>days</span></div>
+                                                <div><span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#a78bfa' }}>{perDay}</span><span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginLeft: '0.3rem' }}>slots/day</span></div>
+                                             </div>
+                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '0.5rem' }}>presentation slots will be created</p>
+                                             
+                                             {/* Slot pill preview strip — tiny visual pills */}
+                                             {perDay > 0 && perDay <= 20 && (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '1rem' }}>
+                                                   {Array.from({ length: Math.min(perDay, 20) }).map((_, i) => (
+                                                      <div key={i} style={{ height: '6px', flex: '1 0 8px', borderRadius: '3px', background: 'rgba(139,92,246,0.4)', animation: `terminal-type 0.3s ease ${i * 0.05}s forwards`, opacity: 0 }} />
+                                                   ))}
+                                                </div>
+                                             )}
+                                          </div>
+                                       );
+                                    })()}
 
-                                   {/* Slot count display */}
-                                   {(() => {
-                                      if (!genStartDate || !genEndDate) return (
-                                         <div style={{ marginBottom: '2rem' }}>
-                                            <div style={{ fontSize: '4rem', fontWeight: 900, color: 'rgba(255,255,255,0.15)', lineHeight: 1, letterSpacing: '-0.03em' }}>—</div>
-                                            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.875rem', marginTop: '0.5rem' }}>Set dates to preview.</p>
-                                         </div>
-                                      );
-                                      const startD = new Date(genStartDate + 'T00:00:00');
-                                      const endD   = new Date(genEndDate + 'T00:00:00');
-                                      let dayCount = 0; let d = new Date(startD);
-                                      while (d <= endD) { if (genSelectedDays.includes(d.getDay())) dayCount++; d.setDate(d.getDate()+1); }
-                                      const startT = new Date(`2000-01-01T${genStart}:00`).getTime();
-                                      const endT   = new Date(`2000-01-01T${genEnd}:00`).getTime();
-                                      const lunchS = genLunchStart ? new Date(`2000-01-01T${genLunchStart}:00`).getTime() : 0;
-                                      const lunchE = genLunchEnd   ? new Date(`2000-01-01T${genLunchEnd}:00`).getTime()   : 0;
-                                      let totalMins = (endT - startT) / 60000;
-                                      if (lunchE > lunchS) totalMins -= (lunchE - lunchS) / 60000;
-                                      const perDay = Math.max(0, Math.floor(totalMins / (Number(genDuration) + Number(genBreak))));
-                                      const total  = dayCount * perDay;
-                                      return (
-                                         <div style={{ marginBottom: '2rem' }}>
-                                            <div style={{ fontSize: '4.5rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.03em' }}>{total}</div>
-                                            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.75rem' }}>
-                                               <div><span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{dayCount}</span><span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginLeft: '0.3rem' }}>days</span></div>
-                                               <div><span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#a78bfa' }}>{perDay}</span><span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginLeft: '0.3rem' }}>slots/day</span></div>
-                                            </div>
-                                            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '0.5rem' }}>presentation slots will be created</p>
-
-                                            {/* Slot pill preview strip — tiny visual pills */}
-                                            {perDay > 0 && perDay <= 20 && (
-                                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '1rem' }}>
-                                                  {Array.from({ length: Math.min(perDay, 20) }).map((_, i) => (
-                                                     <div key={i} style={{ height: '6px', flex: '1 0 8px', borderRadius: '3px', background: 'rgba(139,92,246,0.4)', animation: `terminal-type 0.3s ease ${i * 0.05}s forwards`, opacity: 0 }} />
-                                                  ))}
-                                               </div>
-                                            )}
-                                         </div>
-                                      );
-                                   })()}
-
-                                   <button 
-                                      onClick={async () => {
-                                        if (genTargetProjectId === 'NEW' && !newProjectTitle) return showToast("Please enter an Assignment Name.", "error");
-                                        if (!genStartDate || !genEndDate || !genStart || !genEnd) return showToast("Please complete all fields.", "error");
-                                        const startD = new Date(genStartDate + 'T00:00:00');
-                                        const endD   = new Date(genEndDate + 'T00:00:00');
-                                        if (startD > endD) return showToast("Start date must be before End date.", "error");
-                                        setGenLoading(true);
-                                        let projectId = genTargetProjectId;
-                                        if (genTargetProjectId === 'NEW') {
-                                           const { data: pd, error: pe } = await supabase.from('projects').insert([{ course_id: activeCourseId, title: newProjectTitle, max_group_size: 5 }]).select().single();
-                                           if (pe) { showToast("Error creating project", "error"); setGenLoading(false); return; }
-                                           projectId = pd.id; setProjects(prev => [...prev, pd]); setGenTargetProjectId(pd.id);
-                                        }
-                                        let totalSlots = 0, processedDays = 0;
-                                        const reportLines: string[] = [];
-                                        let cur = new Date(startD);
-                                        while (cur <= endD) {
-                                           if (genSelectedDays.includes(cur.getDay())) {
-                                              const yyyy = cur.getFullYear();
-                                              const mm = String(cur.getMonth() + 1).padStart(2, '0');
-                                              const dd = String(cur.getDate()).padStart(2, '0');
-                                              const dateStr = `${yyyy}-${mm}-${dd}`;
-                                              const dayName = cur.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-                                              const { data: ev, error: ee } = await supabase.from('events').insert([{ project_id: projectId, title: `${newProjectTitle || 'Session'} Slots`, date: dateStr }]).select().single();
-                                              if (!ee) {
-                                                 const slots: any[] = [];
-                                                 let t = new Date(`2000-01-01T${genStart}:00`);
-                                                 const maxT = new Date(`2000-01-01T${genEnd}:00`);
-                                                 while (t < maxT) {
-                                                    const pe2 = new Date(t.getTime() + Number(genDuration) * 60000);
-                                                    if (genLunchStart && genLunchEnd) {
-                                                       const ls = new Date(`2000-01-01T${genLunchStart}:00`);
-                                                       const le = new Date(`2000-01-01T${genLunchEnd}:00`);
-                                                       if ((t >= ls && t < le) || (pe2 > ls && pe2 <= le) || (t <= ls && pe2 >= le)) { t = new Date(le); continue; }
-                                                    }
-                                                    if (pe2 > maxT) break;
-                                                    const s = t.toTimeString().substring(0,5); t = pe2;
-                                                    slots.push({ event_id: ev.id, start_time: s+':00', end_time: t.toTimeString().substring(0,5)+':00', status: 'AVAILABLE' });
-                                                    t.setMinutes(t.getMinutes() + Number(genBreak));
-                                                 }
-                                                 if (slots.length > 0) { await supabase.from('slots').insert(slots); totalSlots += slots.length; }
-                                                 reportLines.push(`✓ ${dayName} — ${slots.length} slots`);
-                                                 processedDays++;
-                                              }
+                                    <button 
+                                       onClick={async () => {
+                                          if (!genStartDate || !genEndDate || !genStart || !genEnd) return showToast("Please complete all fields.", "error");
+                                          if (genTargetProjectId === 'NEW' && !newProjectTitle.trim()) {
+                                             return showToast("Please enter an assignment name.", "error");
                                            }
-                                           cur.setDate(cur.getDate() + 1);
-                                        }
-                                        reportLines.unshift(`>> Batch launched for "${newProjectTitle || 'Legacy'}"`, `⚡ Processing ${processedDays} day${processedDays !== 1 ? 's' : ''}...`, '');
-                                        reportLines.push('', `>> ${totalSlots} slots committed to database ✓`);
-                                        setMissionReport({ lines: reportLines, totalSlots, totalDays: processedDays });
-                                        setGenLoading(false);
-                                        loadWorkspacePulse(activeCourseId!);
-                                      }}
-                                      disabled={genLoading}
-                                      style={{ width: '100%', padding: '1.25rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontWeight: 900, fontSize: '1.05rem', borderRadius: '18px', border: 'none', boxShadow: '0 8px 24px rgba(139,92,246,0.3)', cursor: genLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', letterSpacing: '0.01em' }}
-                                      onMouseOver={e => !genLoading && (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 12px 32px rgba(139,92,246,0.45)')}
-                                      onMouseOut={e => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 8px 24px rgba(139,92,246,0.3)')}
-                                   >
-                                      {genLoading ? <><Hourglass size={18} style={{ marginRight: '0.5rem' }}/> Generating...</> : '⚡ Execute Batch Launch'}
-                                   </button>
-                                </div>
+                                          const startD = new Date(genStartDate + 'T12:00:00');
+                                          const endD   = new Date(genEndDate + 'T12:00:00');
+                                          if (startD > endD) return showToast("Start date must be before End date.", "error");
+                                          
+                                          setGenLoading(true);
+                                          
+                                          const reportLines: string[] = [
+                                             'WARN:Initializing batch launch...',
+                                             'INFO:Establishing secure database connection...',
+                                          ];
+                                          setMissionReport({ lines: [...reportLines], totalSlots: 0, totalDays: 0 });
+                                          await new Promise(r => setTimeout(r, 400));
+
+                                          let projectId = genTargetProjectId;
+                                          if (genTargetProjectId === 'NEW') {
+                                             reportLines.push(`INFO:Creating assignment directive "${newProjectTitle}"...`);
+                                             setMissionReport({ lines: [...reportLines], totalSlots: 0, totalDays: 0 });
+                                             
+                                             const { data: pd, error: pe } = await supabase.from('projects').insert([{ course_id: activeCourseId, title: newProjectTitle, max_group_size: 5 }]).select().single();
+                                             if (pe) { 
+                                                showToast("Error creating project", "error"); 
+                                                setGenLoading(false); 
+                                                return; 
+                                             }
+                                             projectId = pd.id; 
+                                             setProjects(prev => [...prev, pd]); 
+                                             setGenTargetProjectId(pd.id);
+                                             reportLines.push(`SUCCESS:Assignment created successfully! ID: ${pd.id.substring(0, 8)}...`);
+                                             setMissionReport({ lines: [...reportLines], totalSlots: 0, totalDays: 0 });
+                                             await new Promise(r => setTimeout(r, 300));
+                                          }
+
+                                          let totalSlots = 0, processedDays = 0;
+                                          let cur = new Date(startD);
+                                          
+                                          const [sh, sm] = genStart.split(':').map(Number);
+                                          const [eh, em] = genEnd.split(':').map(Number);
+                                          const maxMins = eh * 60 + em;
+                                          const duration = Number(genDuration);
+                                          const breakTime = Number(genBreak);
+
+                                          reportLines.push('INFO:Starting timeline generator queue...');
+                                          setMissionReport({ lines: [...reportLines], totalSlots, totalDays: 0 });
+                                          await new Promise(r => setTimeout(r, 300));
+
+                                          while (cur <= endD) {
+                                             if (genSelectedDays.includes(cur.getDay())) {
+                                                const yyyy = cur.getFullYear();
+                                                const mm = String(cur.getMonth() + 1).padStart(2, '0');
+                                                const dd = String(cur.getDate()).padStart(2, '0');
+                                                const dateStr = `${yyyy}-${mm}-${dd}`;
+                                                const dayName = cur.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                                                
+                                                reportLines.push(`INFO:Generating slots for ${dayName}...`);
+                                                setMissionReport({ lines: [...reportLines], totalSlots, totalDays: processedDays });
+                                                
+                                                const { data: ev, error: ee } = await supabase.from('events').insert([{ project_id: projectId, title: `${newProjectTitle || 'Session'} Slots`, date: dateStr }]).select().single();
+                                                if (!ee) {
+                                                   const daySlots: any[] = [];
+                                                   let currentMins = sh * 60 + sm;
+                                                   
+                                                   while (currentMins < maxMins) {
+                                                      const nextMins = currentMins + duration;
+                                                      if (genLunchStart && genLunchEnd) {
+                                                         const [lsh, lsm] = genLunchStart.split(':').map(Number);
+                                                         const [leh, lem] = genLunchEnd.split(':').map(Number);
+                                                         const ls = lsh * 60 + lsm;
+                                                         const le = leh * 60 + lem;
+                                                         if ((currentMins >= ls && currentMins < le) || (nextMins > ls && nextMins <= le) || (currentMins <= ls && nextMins >= le)) {
+                                                            currentMins = le;
+                                                            continue;
+                                                         }
+                                                      }
+                                                      if (nextMins > maxMins) break;
+                                                      
+                                                      const formatMins = (m: number) => {
+                                                         const h = Math.floor(m / 60);
+                                                         const mins = m % 60;
+                                                         return `${String(h).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+                                                      };
+                                                      
+                                                      const startStr = formatMins(currentMins);
+                                                      const endStr = formatMins(nextMins);
+                                                      
+                                                      daySlots.push({ 
+                                                         event_id: ev.id, 
+                                                         start_time: startStr + ':00', 
+                                                         end_time: endStr + ':00', 
+                                                         status: 'AVAILABLE' 
+                                                      });
+                                                      
+                                                      currentMins = nextMins + breakTime;
+                                                   }
+                                                   
+                                                   if (daySlots.length > 0) { 
+                                                      await supabase.from('slots').insert(daySlots); 
+                                                      totalSlots += daySlots.length; 
+                                                   }
+                                                   
+                                                   reportLines.pop();
+                                                   reportLines.push(`SUCCESS:${dayName} — ${daySlots.length} slots generated`);
+                                                   processedDays++;
+                                                   setMissionReport({ lines: [...reportLines], totalSlots, totalDays: processedDays });
+                                                   
+                                                   await new Promise(r => setTimeout(r, 200));
+                                                } else {
+                                                   reportLines.push(`WARN:Failed to generate for ${dayName}: ${ee.message}`);
+                                                   setMissionReport({ lines: [...reportLines], totalSlots, totalDays: processedDays });
+                                                }
+                                             }
+                                             cur.setDate(cur.getDate() + 1);
+                                          }
+                                          
+                                          reportLines.push('', `SUCCESS:Batch launch committed. ${totalSlots} slots online ✓`);
+                                          setMissionReport({ lines: [...reportLines], totalSlots, totalDays: processedDays });
+                                          setGenLoading(false);
+                                          loadWorkspacePulse(activeCourseId!);
+                                       }}
+                                       disabled={genLoading}
+                                       style={{ width: '100%', padding: '1.25rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontWeight: 900, fontSize: '1.05rem', borderRadius: '18px', border: 'none', boxShadow: '0 8px 24px rgba(139,92,246,0.3)', cursor: genLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', letterSpacing: '0.01em' }}
+                                       onMouseOver={e => !genLoading && (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 12px 32px rgba(139,92,246,0.45)')}
+                                       onMouseOut={e => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 8px 24px rgba(139,92,246,0.3)')}
+                                    >
+                                       {genLoading ? <><Hourglass size={18} style={{ marginRight: '0.5rem' }}/> Generating...</> : '⚡ Execute Batch Launch'}
+                                    </button>
+                                 </div>
                              )}
                           </div>
 

@@ -800,3 +800,30 @@ h1, h2, h3, h4, h5, h6 {
     padding: 1.5rem 1rem !important;
   }
 }
+
+/* Dark Mode HTML5 Date Picker Calendar Icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(240deg); /* Inverts black to white and tints purple */
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) sepia(1) saturate(7) hue-rotate(240deg);
+  opacity: 1;
+}
+
+/* Terminal logs streaming typing effect */
+.terminal-line {
+  animation: log-type-in 0.15s ease forwards;
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+@keyframes log-type-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
