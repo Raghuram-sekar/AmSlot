@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
    CalendarDays, Users, CheckCircle2, Lock, ArrowRight, Hourglass, UserPlus,
    Clock, ArrowLeft, ChevronRight, Hash, LogOut, XOctagon, ListOrdered,
-   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield
+   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
@@ -63,6 +63,7 @@ export default function StudentPortal() {
 
    // Custom confirm modal
    const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
    // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -314,6 +315,7 @@ export default function StudentPortal() {
     };
 
     const enterWorkspace = async (courseId: string) => {
+       setMobileMenuOpen(false);
        setActiveCourseId(courseId);
        setViewState('WORKSPACE');
        setGroupStep('choose');
@@ -404,12 +406,28 @@ export default function StudentPortal() {
    // ─── Derived Values ──────────────────────────────────────────────────────────
    if (loading) {
       return (
-         <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+      <div className="app-container">
+         {/* Mobile Header Bar */}
+         <div className="mobile-header-bar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+               <div className="creative-logo" style={{ width: '28px', height: '28px' }}>
+                  <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
+                  <div className="logo-core" style={{ borderRadius: '5px' }}><Hourglass size={9} color="#fff" /></div>
+               </div>
+               <span style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-outfit)' }}>Am<span className="text-gradient">Slot</span></span>
+            </div>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="mobile-menu-btn">
+               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+         </div>
+
+         {/* Mobile Backdrop overlay */}
+         <div className={`mobile-backdrop ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
          <div className="fluid-blob blob-2" style={{ opacity: 0.12, top: '20%', left: '30%', pointerEvents: 'none' }}></div>
-            <aside style={{ width: '280px', borderRight: '1px solid var(--card-border)', padding: '2rem', height: '100%', overflowY: 'auto' }}>
+         <aside className={`sidebar-container ${mobileMenuOpen ? 'open' : ''}`} style={{ width: viewState === 'PORTAL' ? '280px' : '300px' }}>
                <div className="skeleton" style={{ height: '40px', width: '150px', marginBottom: '3rem' }} />
             </aside>
-            <main style={{ flex: 1, padding: '3rem 4rem', height: '100%', overflowY: 'auto' }}>
+         <main className="main-content">
                <div className="skeleton" style={{ height: '50px', width: '300px', marginBottom: '1rem' }} />
                <div className="skeleton" style={{ height: '20px', width: '500px', marginBottom: '4rem' }} />
                <CourseSkeleton />
@@ -427,21 +445,13 @@ export default function StudentPortal() {
 
    // ─── RENDER ─────────────────────────────────────────────────────────────────
    return (
-      <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+      <div className="app-container">
          <div className="fluid-blob blob-2" style={{ opacity: 0.12, top: '20%', left: '30%', pointerEvents: 'none' }}></div>
 
          {/* ═══════════════════════════════════════════════
           SIDEBAR
           ═══════════════════════════════════════════════ */}
-         <aside style={{
-            width: viewState === 'PORTAL' ? '280px' : '300px',
-            borderRight: '1px solid var(--card-border)',
-            padding: '2rem',
-            background: 'rgba(255,255,255,0.015)',
-            display: 'flex', flexDirection: 'column',
-            transition: 'width 0.3s ease',
-            position: 'relative', overflow: 'hidden'
-         }}>
+         <aside className={`sidebar-container ${mobileMenuOpen ? 'open' : ''}`} style={{ width: viewState === 'PORTAL' ? '280px' : '300px' }}>
             {/* Ambient blob */}
             <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '180px', height: '180px', background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
@@ -668,7 +678,7 @@ export default function StudentPortal() {
          {/* ═══════════════════════════════════════════════
           MAIN CONTENT
           ═══════════════════════════════════════════════ */}
-         <main style={{ flex: 1, padding: '3rem 4rem', position: 'relative', overflowX: 'hidden', overflowY: 'auto', height: '100vh' }}>
+         <main className="main-content">
 
             {/* ──────────────────────────────────────────────
             PORTAL VIEW: My Courses
@@ -1039,11 +1049,11 @@ export default function StudentPortal() {
 
                         {/* ── TIME BLOCK BOARD ── main slot view */}
                         {events.length > 0 && !bookedSlot && slots.filter(sl => sl.status === 'AVAILABLE').length > 0 && (
-                           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2rem', alignItems: 'start' }}>
+                           <div className="two-col-grid">
 
-                              {/* Date Selector — vertical strip */}
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <div>
                                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Select Day</div>
+                                 <div className="date-strip">
                                  {events.map((ev) => {
                                     const d = new Date(ev.date + 'T00:00:00');
                                     const isActive = activeDate === ev.date;
@@ -1064,6 +1074,7 @@ export default function StudentPortal() {
                                        </button>
                                     );
                                  })}
+                                 </div>
                               </div>
 
                               {/* Time Block Board */}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search } from 'lucide-react';
+import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 
@@ -70,6 +70,7 @@ export default function ProfessorDashboard() {
 
   // Custom Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -161,6 +162,7 @@ export default function ProfessorDashboard() {
   };
 
   const enterWorkspace = async (courseId: string) => {
+    setMobileMenuOpen(false);
     setActiveCourseId(courseId);
     const active = courses.find(c => c.id === courseId);
     if (active) {
@@ -173,6 +175,7 @@ export default function ProfessorDashboard() {
   };
 
   const exitWorkspace = () => {
+    setMobileMenuOpen(false);
     setActiveCourseId(null);
     setViewState('PORTAL');
     setProjects([]);
@@ -532,12 +535,28 @@ export default function ProfessorDashboard() {
 
   if (loading) {
     return (
-     <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+      <div className="app-container">
+         {/* Mobile Header Bar */}
+         <div className="mobile-header-bar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+               <div className="creative-logo" style={{ width: '28px', height: '28px' }}>
+                  <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
+                  <div className="logo-core" style={{ borderRadius: '5px' }}><Hourglass size={9} color="#fff" /></div>
+               </div>
+               <span style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-outfit)' }}>Am<span className="text-gradient">Slot</span></span>
+            </div>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="mobile-menu-btn">
+               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+         </div>
+
+         {/* Mobile Backdrop overlay */}
+         <div className={`mobile-backdrop ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
       <div className="fluid-blob blob-1" style={{ opacity: 0.1, top: '10%', right: '10%', pointerEvents: 'none' }}></div>
-         <aside style={{ width: '280px', borderRight: '1px solid var(--card-border)', padding: '2rem', height: '100%', overflowY: 'auto' }}>
+         <aside className={`sidebar-container ${mobileMenuOpen ? 'open' : ''}`} style={{ width: '280px' }}>
             <div className="skeleton" style={{ height: '40px', width: '150px', marginBottom: '3rem' }} />
          </aside>
-         <main style={{ flex: 1, padding: '3rem 4rem', height: '100%', overflowY: 'auto' }}>
+         <main className="main-content">
             <div className="skeleton" style={{ height: '40px', width: '300px', marginBottom: '1rem' }} />
             <div className="skeleton" style={{ height: '20px', width: '500px', marginBottom: '4rem' }} />
             <CourseSkeleton />
@@ -549,13 +568,29 @@ export default function ProfessorDashboard() {
   const activeCourse = courses.find(c => c.id === activeCourseId);
 
     return (
-     <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+      <div className="app-container">
+         {/* Mobile Header Bar */}
+         <div className="mobile-header-bar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+               <div className="creative-logo" style={{ width: '28px', height: '28px' }}>
+                  <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
+                  <div className="logo-core" style={{ borderRadius: '5px' }}><Hourglass size={9} color="#fff" /></div>
+               </div>
+               <span style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-outfit)' }}>Am<span className="text-gradient">Slot</span></span>
+            </div>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="mobile-menu-btn">
+               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+         </div>
+
+         {/* Mobile Backdrop overlay */}
+         <div className={`mobile-backdrop ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
       <div className="fluid-blob blob-1" style={{ opacity: 0.1, top: '10%', right: '10%', pointerEvents: 'none' }}></div>
       
       {/* =========================================================
           SIDEBAR NAVIGATION (Dynamic based on ViewState)
           ========================================================= */}
-      <aside style={{ width: viewState === 'PORTAL' ? '280px' : '300px', borderRight: '1px solid var(--card-border)', padding: '2rem', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', transition: 'width 0.3s ease' }}>
+      <aside className={`sidebar-container ${mobileMenuOpen ? 'open' : ''}`} style={{ width: viewState === 'PORTAL' ? '280px' : '300px' }}>
         
         {/* Universal Brand Header */}
         <div style={{ marginBottom: viewState === 'PORTAL' ? '4rem' : '2.5rem' }}>
@@ -642,7 +677,7 @@ export default function ProfessorDashboard() {
       {/* =========================================================
           MAIN CONTENT AREA
           ========================================================= */}
-      <main style={{ flex: 1, padding: '3rem 4rem', position: 'relative', overflowX: 'hidden', overflowY: 'auto', height: '100%' }}>
+         <main className="main-content">
 
          {/* ---------------- LEVEL 1: PORTAL ---------------- */}
          {viewState === 'PORTAL' && (
@@ -707,7 +742,7 @@ export default function ProfessorDashboard() {
                </div>
 
                {/* Executive Metrics Row */}
-               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+               <div className="metrics-grid">
                   <div className="metric-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Enrolled</div>
                      <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#fff' }}>{courseGroups.reduce((acc, g) => acc + (g.group_members?.length || 0), 0)} <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.2)' }}>Students</span></div>
@@ -753,14 +788,14 @@ export default function ProfessorDashboard() {
                            </div>
                         </div>
                      ) : (
-                        (() => {
+(() => {
                            const uniqueDates = Array.from(new Set(scheduleSlots.map(s => s.event_date))).sort();
                            return (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2.5rem', alignItems: 'start' }}>
+                              <div className="two-col-grid">
                                  
-                                 {/* Date Strip Column */}
-                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '95px' }}>
+                                 <div>
                                     <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.5rem' }}>Select Date</div>
+                                    <div className="date-strip">
                                     {uniqueDates.map(dateStr => {
                                        const d = new Date(dateStr + 'T00:00:00');
                                        const isActive = activeScheduleDate === dateStr;
@@ -809,6 +844,7 @@ export default function ProfessorDashboard() {
                                           </button>
                                        );
                                     })}
+                                    </div>
                                  </div>
 
                                  {/* Slots Table Column */}
@@ -874,7 +910,7 @@ export default function ProfessorDashboard() {
                     </header>
 
                     {genLoading ? <GeneratorSkeleton /> : (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: '2rem', alignItems: 'start' }}>
+                      <div className="booking-panel-grid">
                        
                        {/* ━━━ LEFT COLUMN: Config ━━━ */}
                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -1523,7 +1559,7 @@ export default function ProfessorDashboard() {
              </div>
 
              {/* Two Column Control Surface */}
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2.5rem' }}>
+             <div className="settings-grid">
                 
                 {/* Left: Status Control Panel */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '32px', padding: '2rem' }}>
