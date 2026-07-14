@@ -40,13 +40,12 @@ export default function AuthPage() {
         
         if (signInError) throw signInError;
         
-        // Fetch role to redirect correctly
         const { data: userData } = await supabase
           .from('users')
           .select('role')
           .eq('id', data.user.id)
-          .single();
-          
+          .maybeSingle();
+
         if (userData?.role === 'PROFESSOR') {
           router.push('/professor');
         } else {
