@@ -1607,7 +1607,7 @@ export default function ProfessorDashboard() {
              </div>
 
              {/* Two Column Control Surface */}
-             <div className="settings-grid">
+             <div className="modal-grid">
                 
                 {/* Left: Status Control Panel */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '32px', padding: '2rem' }}>

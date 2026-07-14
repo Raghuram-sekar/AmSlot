@@ -692,6 +692,26 @@ h1, h2, h3, h4, h5, h6 {
   align-items: start;
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2.5rem;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 868px) {
+  .settings-grid, .modal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .app-container {
     flex-direction: column;
