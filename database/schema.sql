@@ -123,11 +123,11 @@ BEGIN
     RETURN FALSE;
   END IF;
 
-  -- 4) Only ONE slot allowed per group per event!
-  IF EXISTS (SELECT 1 FROM public.slots WHERE event_id = v_event_id AND group_id = p_group_id) THEN
-    RAISE EXCEPTION 'Policy Error: Your group has already booked a slot for this Review Event.';
-    RETURN FALSE;
-  END IF;
+  -- 4) Release any previous slot booked by this group for this specific review event/project!
+  -- This allows safe rebooking/rescheduling atomically.
+  UPDATE public.slots 
+  SET group_id = NULL, status = 'AVAILABLE'
+  WHERE event_id = v_event_id AND group_id = p_group_id;
 
   -- 5) Book the slot atomically
   UPDATE public.slots 

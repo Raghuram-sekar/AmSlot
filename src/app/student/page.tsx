@@ -120,28 +120,38 @@ export default function StudentPortal() {
       setGroupLoading(false);
    };
 
-   const handleLeaveGroup = async () => {
-      setConfirmModal({
-         isOpen: true,
-         title: "Leave Group",
-         message: "Are you sure you want to leave this group? If your group has booked a slot, it will be cancelled.",
-         confirmLabel: "Leave Group",
-         danger: true,
-         onConfirm: async () => {
-            await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', myGroup.id);
-            const { error } = await supabase.from('group_members').delete().eq('group_id', myGroup.id).eq('student_id', user.id);
-            if (!error) {
-               setMyGroup(null);
-               setMyGroupMembers([]);
-               setSelectedSlot(null);
-               showToast("You have left the group.", "info");
-            } else {
-               showToast("Error leaving group: " + error.message, "error");
-            }
-            setConfirmModal(null);
-         }
-      });
-   };
+    const handleLeaveGroup = async () => {
+       setConfirmModal({
+          isOpen: true,
+          title: "Leave Group",
+          message: "Are you sure you want to leave this group? If your group has booked a slot, it will be cancelled.",
+          confirmLabel: "Leave Group",
+          danger: true,
+          onConfirm: async () => {
+             await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', myGroup.id);
+             const { error } = await supabase.from('group_members').delete().eq('group_id', myGroup.id).eq('student_id', user.id);
+             if (!error) {
+                // Check if group is empty now
+                const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', myGroup.id);
+                if (count === 0) {
+                   await supabase.from('groups').delete().eq('id', myGroup.id);
+                } else if (myGroup.leader_id === user.id) {
+                   const { data: nextMember } = await supabase.from('group_members').select('student_id').eq('group_id', myGroup.id).limit(1).maybeSingle();
+                   if (nextMember) {
+                      await supabase.from('groups').update({ leader_id: nextMember.student_id }).eq('id', myGroup.id);
+                   }
+                }
+                setMyGroup(null);
+                setMyGroupMembers([]);
+                setSelectedSlot(null);
+                showToast("You have left the group.", "info");
+             } else {
+                showToast("Error leaving group: " + error.message, "error");
+             }
+             setConfirmModal(null);
+          }
+       });
+    };
 
    const handleCancelBooking = async () => {
       const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
@@ -179,6 +189,16 @@ export default function StudentPortal() {
 
    useEffect(() => { checkAuth(); }, []);
 
+    useEffect(() => {
+       if (!user) return;
+       const channel = supabase.channel('realtime_student_portal')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'course_enrollments', filter: `student_id=eq.${user.id}` }, () => {
+             fetchEnrolledCourses(user.id);
+          })
+          .subscribe();
+       return () => { supabase.removeChannel(channel); };
+    }, [user?.id, activeCourseId]);
+
    useEffect(() => {
       if (viewState === 'WORKSPACE' && activeProject) {
          const channel = supabase.channel('realtime_workspace_student')
@@ -214,10 +234,17 @@ export default function StudentPortal() {
       setLoading(false);
    };
 
-   const fetchEnrolledCourses = async (userId: string) => {
-      const { data } = await supabase.from('course_enrollments').select('course_id, courses(*)').eq('student_id', userId);
-      if (data) setEnrolledCourses(data.map((item: any) => item.courses));
-   };
+    const fetchEnrolledCourses = async (userId: string) => {
+       const { data } = await supabase.from('course_enrollments').select('course_id, courses(*)').eq('student_id', userId);
+       const enrolled = data ? data.map((item: any) => item.courses).filter(Boolean) : [];
+       setEnrolledCourses(enrolled);
+       
+       if (activeCourseId && !enrolled.some((c: any) => c.id === activeCourseId)) {
+          showToast("Workspace was deleted or you were unenrolled.", "info");
+          setViewState('PORTAL');
+          setActiveCourseId(null);
+       }
+    };
 
    const handleJoinCourse = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -1029,8 +1056,8 @@ export default function StudentPortal() {
                                        const isBookedByOthers = !isAvailable && slot.group_id !== myGroup?.id;
                                        const isLeader = myGroup?.leader_id === user.id;
                                        const isSelected = selectedSlot === slot.id;
-                                       const groupAlreadyBooked = slots.some(sl => sl.group_id === myGroup?.id);
-                                       const canSelect = isAvailable && isLeader && !groupAlreadyBooked;
+                                        const myCurrentBooking = slots.find(sl => sl.group_id === myGroup?.id);
+                                        const canSelect = isAvailable && isLeader && slot.id !== myCurrentBooking?.id;
 
                                        let leftBorder = 'rgba(255,255,255,0.06)';
                                        let bg = 'rgba(255,255,255,0.02)';
@@ -1085,24 +1112,26 @@ export default function StudentPortal() {
                                     })}
                                  </div>
 
-                                 {/* Lock Slot CTA */}
-                                 {selectedSlot && myGroup.leader_id === user.id && (
-                                    <div className="animate-scale-in" style={{ marginTop: '2rem', padding: '1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.1), rgba(139,92,246,0.04))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
-                                       <div>
-                                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '0.2rem' }}>Ready to commit?</div>
-                                          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>Lock in this slot for {myGroup.name}</div>
-                                       </div>
-                                       <button onClick={handleBookSlot} disabled={bookingLoading}
-                                          style={{ padding: '0.875rem 2rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(139,92,246,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
-                                          onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                          onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-                                       >
-                                          {bookingLoading ? <Hourglass size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={16} />}
-                                          {bookingLoading ? 'Securing...' : 'Lock Slot'}
-                                       </button>
-                                    </div>
-                                 )}
-
+                                  {/* Lock Slot CTA */}
+                                  {selectedSlot && myGroup.leader_id === user.id && (() => {
+                                     const hasBooking = slots.some(sl => sl.group_id === myGroup.id);
+                                     return (
+                                        <div className="animate-scale-in" style={{ marginTop: '2rem', padding: '1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.1), rgba(139,92,246,0.04))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
+                                           <div>
+                                              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '0.2rem' }}>{hasBooking ? 'Need to reschedule?' : 'Ready to commit?'}</div>
+                                              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>{hasBooking ? 'Release old slot and book this one' : `Lock in this slot for ${myGroup.name}`}</div>
+                                           </div>
+                                           <button onClick={handleBookSlot} disabled={bookingLoading}
+                                              style={{ padding: '0.875rem 2rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(139,92,246,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                                              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                              onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                           >
+                                              {bookingLoading ? <Hourglass size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={16} />}
+                                              {bookingLoading ? 'Securing...' : hasBooking ? 'Reschedule Slot' : 'Lock Slot'}
+                                           </button>
+                                        </div>
+                                     );
+                                  })()}
                                  {selectedSlot && myGroup.leader_id !== user.id && (
                                     <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', background: 'rgba(244,63,94,0.05)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f43f5e', fontSize: '0.85rem', fontWeight: 700 }}>
                                        <Lock size={14} /> Only the group leader can confirm a booking.

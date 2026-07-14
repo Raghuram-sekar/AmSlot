@@ -260,6 +260,25 @@ export default function ProfessorDashboard() {
     setGroupsLoading(false);
   };
 
+  const handleDeleteGroup = async (grp: any) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Group / Team",
+      message: `Are you sure you want to permanently delete team "${grp.name}"? This will cancel their booked slots and remove all members.`,
+      onConfirm: async () => {
+        await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', grp.id);
+        const { error } = await supabase.from('groups').delete().eq('id', grp.id);
+        if (!error) {
+          showToast(`Team "${grp.name}" has been deleted.`, "success");
+          loadGroups();
+        } else {
+          showToast(`Error deleting team: ${error.message}`, "error");
+        }
+        setConfirmModal(null);
+      }
+    });
+  };
+
   const handleDeleteProject = async (projectId: string) => {
     setConfirmModal({
       isOpen: true,
@@ -1274,7 +1293,17 @@ export default function ProfessorDashboard() {
                                   {/* Expanded Member Roster */}
                                   {isExpanded && (
                                     <div className="animate-fade-in-down" style={{ padding: '0 2rem 1.5rem 2rem', borderTop: '1px solid rgba(139,92,246,0.15)', background: 'rgba(139,92,246,0.02)' }}>
-                                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, margin: '1rem 0 0.75rem' }}>Member Roster</div>
+                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0 0.75rem' }}>
+                                          <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Member Roster</div>
+                                          <button 
+                                             onClick={(e) => { e.stopPropagation(); handleDeleteGroup(grp); }}
+                                             style={{ background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.15)', color: '#f43f5e', fontSize: '0.75rem', fontWeight: 700, padding: '0.35rem 0.75rem', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+                                             onMouseOver={e => e.currentTarget.style.background = 'rgba(244,63,94,0.12)'}
+                                             onMouseOut={e => e.currentTarget.style.background = 'rgba(244,63,94,0.06)'}
+                                          >
+                                             Delete Team
+                                          </button>
+                                       </div>
                                       {members.length === 0 ? (
                                         <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.875rem', fontStyle: 'italic' }}>No members have joined this group yet.</div>
                                       ) : (
