@@ -100,8 +100,8 @@ AS $$
 DECLARE
   v_slot_status TEXT;
   v_event_id UUID;
-  v_group_project_id UUID;
-  v_event_project_id UUID;
+  v_group_course_id UUID;
+  v_event_course_id UUID;
 BEGIN
   -- 1) Use FOR UPDATE to lock the SPECIFIC slot row we want so no one else can read it until we finish 
   SELECT status, event_id INTO v_slot_status, v_event_id 
@@ -114,12 +114,12 @@ BEGIN
     RETURN FALSE;
   END IF;
 
-  -- 3) Security/Data Integrity Check: Does the group actually belong to this project?
-  SELECT project_id INTO v_group_project_id FROM public.groups WHERE id = p_group_id;
-  SELECT project_id INTO v_event_project_id FROM public.events WHERE id = v_event_id;
+  -- 3) Security/Data Integrity Check: Does the group actually belong to this course?
+  SELECT course_id INTO v_group_course_id FROM public.groups WHERE id = p_group_id;
+  SELECT p.course_id INTO v_event_course_id FROM public.events e JOIN public.projects p ON e.project_id = p.id WHERE e.id = v_event_id;
   
-  IF v_group_project_id != v_event_project_id THEN
-    RAISE EXCEPTION 'Security Error: This group does not belong to the project this slot is for.';
+  IF v_group_course_id != v_event_course_id THEN
+    RAISE EXCEPTION 'Security Error: This group does not belong to the course this slot is for.';
     RETURN FALSE;
   END IF;
 
