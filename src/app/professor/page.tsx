@@ -515,7 +515,8 @@ export default function ProfessorDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden' }}>
+     <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+      <div className="fluid-blob blob-1" style={{ opacity: 0.1, top: '10%', right: '10%', pointerEvents: 'none' }}></div>
          <aside style={{ width: '280px', borderRight: '1px solid var(--card-border)', padding: '2rem', height: '100%', overflowY: 'auto' }}>
             <div className="skeleton" style={{ height: '40px', width: '150px', marginBottom: '3rem' }} />
          </aside>
@@ -530,8 +531,9 @@ export default function ProfessorDashboard() {
 
   const activeCourse = courses.find(c => c.id === activeCourseId);
 
-   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden' }}>
+    return (
+     <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+      <div className="fluid-blob blob-1" style={{ opacity: 0.1, top: '10%', right: '10%', pointerEvents: 'none' }}></div>
       
       {/* =========================================================
           SIDEBAR NAVIGATION (Dynamic based on ViewState)
@@ -624,7 +626,6 @@ export default function ProfessorDashboard() {
           MAIN CONTENT AREA
           ========================================================= */}
       <main style={{ flex: 1, padding: '3rem 4rem', position: 'relative', overflowX: 'hidden', overflowY: 'auto', height: '100%' }}>
-         <div className="fluid-blob blob-1" style={{ opacity: 0.1, top: '10%', right: '10%' }}></div>
 
          {/* ---------------- LEVEL 1: PORTAL ---------------- */}
          {viewState === 'PORTAL' && (

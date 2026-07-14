@@ -337,7 +337,8 @@ export default function StudentPortal() {
    // ─── Derived Values ──────────────────────────────────────────────────────────
    if (loading) {
       return (
-         <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden' }}>
+         <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+         <div className="fluid-blob blob-2" style={{ opacity: 0.12, top: '20%', left: '30%', pointerEvents: 'none' }}></div>
             <aside style={{ width: '280px', borderRight: '1px solid var(--card-border)', padding: '2rem', height: '100%', overflowY: 'auto' }}>
                <div className="skeleton" style={{ height: '40px', width: '150px', marginBottom: '3rem' }} />
             </aside>
@@ -359,7 +360,8 @@ export default function StudentPortal() {
 
    // ─── RENDER ─────────────────────────────────────────────────────────────────
    return (
-      <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--background)', overflow: 'hidden', position: 'relative' }}>
+         <div className="fluid-blob blob-2" style={{ opacity: 0.12, top: '20%', left: '30%', pointerEvents: 'none' }}></div>
 
          {/* ═══════════════════════════════════════════════
           SIDEBAR
@@ -600,7 +602,6 @@ export default function StudentPortal() {
           MAIN CONTENT
           ═══════════════════════════════════════════════ */}
          <main style={{ flex: 1, padding: '3rem 4rem', position: 'relative', overflowX: 'hidden', overflowY: 'auto', height: '100vh' }}>
-            <div className="fluid-blob blob-2" style={{ opacity: 0.12, top: '20%', left: '30%' }}></div>
 
             {/* ──────────────────────────────────────────────
             PORTAL VIEW: My Courses
