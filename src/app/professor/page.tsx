@@ -73,6 +73,38 @@ export default function ProfessorDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+     if (!courses.length) return;
+
+     // 1. Initial check
+     const params = new URLSearchParams(window.location.search);
+     const courseId = params.get('course');
+     if (courseId && courses.some(c => c.id === courseId)) {
+        enterWorkspace(courseId);
+     }
+
+     // 2. popstate listener
+     const handlePopState = (event: PopStateEvent) => {
+        const state = event.state;
+        if (state && state.viewState === 'WORKSPACE' && state.courseId) {
+           setActiveCourseId(state.courseId);
+           setViewState('WORKSPACE');
+           const active = courses.find(c => c.id === state.courseId);
+           if (active) {
+             setEditCourseName(active.name);
+             setEditCourseSection(active.section);
+           }
+           loadWorkspacePulse(state.courseId);
+        } else {
+           setActiveCourseId(null);
+           setViewState('PORTAL');
+        }
+     };
+
+     window.addEventListener('popstate', handlePopState);
+     return () => window.removeEventListener('popstate', handlePopState);
+  }, [courses]);
+
+  useEffect(() => {
     checkAuth();
   }, []);
 
@@ -171,6 +203,9 @@ export default function ProfessorDashboard() {
     }
     setViewState('WORKSPACE');
     setActiveTab('schedule');
+    if (typeof window !== 'undefined' && window.location.search !== `?course=${courseId}`) {
+      window.history.pushState({ viewState: 'WORKSPACE', courseId: courseId }, '', `?course=${courseId}`);
+    }
     loadWorkspacePulse(courseId);
   };
 
@@ -179,6 +214,9 @@ export default function ProfessorDashboard() {
     setActiveCourseId(null);
     setViewState('PORTAL');
     setProjects([]);
+    if (typeof window !== 'undefined' && window.location.search !== '') {
+      window.history.pushState({ viewState: 'PORTAL' }, '', window.location.pathname);
+    }
   };
 
   const handleCreateProject = async () => {
@@ -734,9 +772,19 @@ export default function ProfessorDashboard() {
                {/* Executive Breadcrumbs */}
                <div className="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', marginBottom: '2rem' }}>
                   <LayoutDashboard size={14} /> 
-                  <span>Workspaces</span>
+                  <span 
+                     onClick={exitWorkspace} 
+                     style={{ cursor: 'pointer', transition: 'color 0.2s' }} 
+                     onMouseOver={e => e.currentTarget.style.color = '#fff'} 
+                     onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+                  >Workspaces</span>
                   <ChevronRight size={14} />
-                  <span>{activeCourse.name}</span>
+                  <span 
+                     onClick={() => setActiveTab('schedule')} 
+                     style={{ cursor: 'pointer', transition: 'color 0.2s' }} 
+                     onMouseOver={e => e.currentTarget.style.color = '#fff'} 
+                     onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+                  >{activeCourse.name}</span>
                   <ChevronRight size={14} />
                   <span style={{ textTransform: 'capitalize', color: 'var(--primary)' }}>{activeTab}</span>
                </div>

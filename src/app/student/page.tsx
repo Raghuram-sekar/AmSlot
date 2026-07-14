@@ -250,6 +250,33 @@ export default function StudentPortal() {
       if (slData) setSlots(slData);
    };
 
+    useEffect(() => {
+       if (!enrolledCourses.length) return;
+
+       // 1. Initial check
+       const params = new URLSearchParams(window.location.search);
+       const courseId = params.get('course');
+       if (courseId && enrolledCourses.some(c => c.id === courseId)) {
+          enterWorkspace(courseId);
+       }
+
+       // 2. popstate listener
+       const handlePopState = (event: PopStateEvent) => {
+          const state = event.state;
+          if (state && state.viewState === 'WORKSPACE' && state.courseId) {
+             setActiveCourseId(state.courseId);
+             setViewState('WORKSPACE');
+             reloadGroupData(state.courseId);
+          } else {
+             setActiveCourseId(null);
+             setViewState('PORTAL');
+          }
+       };
+
+       window.addEventListener('popstate', handlePopState);
+       return () => window.removeEventListener('popstate', handlePopState);
+    }, [enrolledCourses]);
+
    const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/auth'); return; }
@@ -314,11 +341,22 @@ export default function StudentPortal() {
        return currentGroupId;
     };
 
+    const exitWorkspace = () => {
+       setMobileMenuOpen(false);
+       setActiveCourseId(null);
+       setViewState('PORTAL');
+       if (typeof window !== 'undefined' && window.location.search !== '') {
+          window.history.pushState({ viewState: 'PORTAL' }, '', window.location.pathname);
+       }
+    };
     const enterWorkspace = async (courseId: string) => {
        setMobileMenuOpen(false);
        setActiveCourseId(courseId);
        setViewState('WORKSPACE');
        setGroupStep('choose');
+       if (typeof window !== 'undefined' && window.location.search !== `?course=${courseId}`) {
+          window.history.pushState({ viewState: 'WORKSPACE', courseId: courseId }, '', `?course=${courseId}`);
+       }
 
        const currentGroupId = await reloadGroupData(courseId);
 
@@ -485,7 +523,7 @@ export default function StudentPortal() {
             {/* ── WORKSPACE SIDEBAR ── */}
             {viewState === 'WORKSPACE' && (
                <div className="animate-fade-in-up" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <button onClick={() => { setActiveCourseId(null); setViewState('PORTAL'); }}
+                  <button onClick={exitWorkspace}
                      style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.06)', padding: '0.875rem 1rem', borderRadius: '14px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, marginBottom: '1.75rem', transition: 'all 0.2s', width: '100%', textAlign: 'left' }}
                      onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff'; }}
                      onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
