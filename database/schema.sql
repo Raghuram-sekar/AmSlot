@@ -222,10 +222,20 @@ CREATE POLICY "Students view projects" ON public.projects FOR SELECT USING (
 );
 
 -- groups: Professor-only control. Group members view.
-CREATE POLICY "Professors manage groups" ON public.groups FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.courses c WHERE c.id = public.groups.course_id AND c.professor_id = auth.uid())
+-- 1. Students can create and manage their groups (leader check)
+CREATE POLICY "Students can insert groups" ON public.groups FOR INSERT TO authenticated WITH CHECK (auth.uid() = leader_id);
+CREATE POLICY "Students can select groups" ON public.groups FOR SELECT TO authenticated USING (auth.uid() = leader_id OR EXISTS (SELECT 1 FROM public.group_members WHERE group_id = id AND student_id = auth.uid()));
+CREATE POLICY "Students can update groups" ON public.groups FOR UPDATE TO authenticated USING (auth.uid() = leader_id) WITH CHECK (auth.uid() = leader_id);
+CREATE POLICY "Students can delete groups" ON public.groups FOR DELETE TO authenticated USING (auth.uid() = leader_id);
+
+-- 2. Professors can manage groups in their course
+CREATE POLICY "Professors can manage groups" ON public.groups FOR ALL TO authenticated USING (
+  EXISTS (SELECT 1 FROM public.courses c WHERE c.id = course_id AND c.professor_id = auth.uid())
+) WITH CHECK (
+  EXISTS (SELECT 1 FROM public.courses c WHERE c.id = course_id AND c.professor_id = auth.uid())
 );
-CREATE POLICY "Students manage their groups" ON public.groups FOR ALL USING (auth.uid() = leader_id);
+
+-- 3. Public view access for lookup
 CREATE POLICY "Anyone can view groups" ON public.groups FOR SELECT TO authenticated USING (true);
 
 -- group_members: Students join groups, leave groups, and view members.
