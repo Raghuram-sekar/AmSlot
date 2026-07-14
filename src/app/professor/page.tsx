@@ -179,7 +179,17 @@ export default function ProfessorDashboard() {
     }
     setUser(session.user);
 
-    const { data: userData } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+    let { data: userData } = await supabase.from('users').select('*').eq('id', session.user.id).maybeSingle();
+
+    // Self-healing: if public profile is missing, call RPC function to create/repair it
+    if (!userData) {
+      const { error: repairError } = await supabase.rpc('create_my_profile');
+      if (!repairError) {
+        const { data: refetchedUser } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+        userData = refetchedUser;
+      }
+    }
+
     if (userData?.role !== 'PROFESSOR') {
       router.push('/student');
       return;
