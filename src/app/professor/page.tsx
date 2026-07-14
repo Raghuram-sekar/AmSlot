@@ -1020,7 +1020,10 @@ export default function ProfessorDashboard() {
                                         let cur = new Date(startD);
                                         while (cur <= endD) {
                                            if (genSelectedDays.includes(cur.getDay())) {
-                                              const dateStr = cur.toISOString().split('T')[0];
+                                              const yyyy = cur.getFullYear();
+                                              const mm = String(cur.getMonth() + 1).padStart(2, '0');
+                                              const dd = String(cur.getDate()).padStart(2, '0');
+                                              const dateStr = `${yyyy}-${mm}-${dd}`;
                                               const dayName = cur.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                                               const { data: ev, error: ee } = await supabase.from('events').insert([{ project_id: projectId, title: `${newProjectTitle || 'Session'} Slots`, date: dateStr }]).select().single();
                                               if (!ee) {
