@@ -71,16 +71,15 @@ export default function ProfessorDashboard() {
   // Custom Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [filterProjectId, setFilterProjectId] = useState<string>('ALL');
+  const filteredScheduleSlots = scheduleSlots.filter(s => filterProjectId === 'ALL' || s.project_id === filterProjectId);
 
   useEffect(() => {
      if (genStartDate && genEndDate) {
         const available = getAvailableDaysInRange(genStartDate, genEndDate);
-        setGenSelectedDays(prev => {
-           const weekdays = available.filter(d => d !== 0 && d !== 6);
-           const defaultSelection = weekdays.length > 0 ? weekdays : available;
-           const filtered = prev.filter(d => available.includes(d));
-           return filtered.length > 0 ? filtered : defaultSelection;
-        });
+        const weekdays = available.filter(d => d !== 0 && d !== 6);
+        const defaultSelection = weekdays.length > 0 ? weekdays : available;
+        setGenSelectedDays(defaultSelection);
      }
   }, [genStartDate, genEndDate]);
 
@@ -115,6 +114,19 @@ export default function ProfessorDashboard() {
      window.addEventListener('popstate', handlePopState);
      return () => window.removeEventListener('popstate', handlePopState);
   }, [courses]);
+
+  useEffect(() => {
+     const filtered = scheduleSlots.filter(s => filterProjectId === 'ALL' || s.project_id === filterProjectId);
+     if (filtered.length > 0) {
+        const uniqueDates = Array.from(new Set(filtered.map(s => s.event_date))).sort();
+        setActiveScheduleDate(prev => {
+           if (prev && uniqueDates.includes(prev)) return prev;
+           return uniqueDates[0] || null;
+        });
+     } else {
+        setActiveScheduleDate(null);
+     }
+  }, [filterProjectId, scheduleSlots]);
 
   useEffect(() => {
     checkAuth();
@@ -443,7 +455,7 @@ export default function ProfessorDashboard() {
   };
 
   const downloadGradeRegistryCSV = () => {
-     if (scheduleSlots.length === 0) {
+     if (filteredScheduleSlots.length === 0) {
         showToast("No data to export", "error");
         return;
      }
@@ -563,19 +575,15 @@ export default function ProfessorDashboard() {
      const end = new Date(endStr + 'T12:00:00');
      if (start > end) return [];
      
-     const diffTime = Math.abs(end.getTime() - start.getTime());
-     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-     if (diffDays >= 6) {
-        return [0, 1, 2, 3, 4, 5, 6];
-     }
-     
-     const days: number[] = [];
+     const days = new Set<number>();
      let current = new Date(start);
-     while (current <= end) {
-        days.push(current.getDay());
+     let safety = 0;
+     while (current <= end && safety < 100) {
+        days.add(current.getDay());
         current.setDate(current.getDate() + 1);
+        safety++;
      }
-     return Array.from(new Set(days));
+     return Array.from(days);
   };
 
 const CourseSkeleton = () => (
@@ -860,7 +868,7 @@ const CourseSkeleton = () => (
                           </div>
                           <TableSkeleton />
                        </div>
-                    ) : scheduleSlots.length === 0 ? (
+                    ) : filteredScheduleSlots.length === 0 ? (
                         <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
                            <div className="empty-state" style={{ padding: '4rem', textAlign: 'center' }}>
                               <div className="empty-state-icon" style={{ width: '64px', height: '64px', margin: '0 auto 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CalendarRange size={32} /></div>
@@ -870,7 +878,7 @@ const CourseSkeleton = () => (
                         </div>
                      ) : (
 (() => {
-                           const uniqueDates = Array.from(new Set(scheduleSlots.map(s => s.event_date))).sort();
+                           const uniqueDates = Array.from(new Set(filteredScheduleSlots.map(s => s.event_date))).sort();
                            return (
                               <div className="two-col-grid">
                                  
@@ -880,7 +888,7 @@ const CourseSkeleton = () => (
                                     {uniqueDates.map(dateStr => {
                                        const d = new Date(dateStr + 'T00:00:00');
                                        const isActive = activeScheduleDate === dateStr;
-                                       const slotsOnDay = scheduleSlots.filter(s => s.event_date === dateStr);
+                                       const slotsOnDay = filteredScheduleSlots.filter(s => s.event_date === dateStr);
                                        const bookedCount = slotsOnDay.filter(s => s.status === 'BOOKED' || s.status === 'PRESENTED').length;
                                        const totalCount = slotsOnDay.length;
                                        
@@ -934,13 +942,13 @@ const CourseSkeleton = () => (
                                       <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
                                     </div>
                                     
-                                    {scheduleSlots.filter(s => s.event_date === activeScheduleDate).length === 0 ? (
+                                    {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).length === 0 ? (
                                        <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
                                           No slots scheduled for this date.
                                        </div>
                                     ) : (
                                        <div>
-                                         {scheduleSlots.filter(s => s.event_date === activeScheduleDate).map((slot) => {
+                                         {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).map((slot) => {
                                             const start = slot.start_time.substring(0,5);
                                             const end = slot.end_time.substring(0,5);
                                             const hasGroup = slot.groups !== null;
@@ -1053,16 +1061,16 @@ const CourseSkeleton = () => (
                                              flex: 1, 
                                              aspectRatio: '1', 
                                              borderRadius: '10px', 
-                                             border: 'none', 
-                                             background: isSelected ? (isWeekend ? 'rgba(244,63,94,0.7)' : 'var(--primary)') : 'rgba(255,255,255,0.04)', 
-                                             color: isSelected ? '#fff' : 'rgba(255,255,255,0.2)', 
+                                             border: isAvailable ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                             background: isSelected ? (isWeekend ? 'rgba(244,63,94,0.7)' : 'var(--primary)') : 'rgba(0,0,0,0.2)', 
+                                             color: isSelected ? '#fff' : (isAvailable ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.15)'), 
                                              fontWeight: 900, 
                                              cursor: isAvailable ? 'pointer' : 'not-allowed', 
                                              transition: 'all 0.15s', 
                                              fontSize: '0.8rem', 
                                              boxShadow: isSelected ? (isWeekend ? '0 4px 12px rgba(244,63,94,0.3)' : '0 4px 12px rgba(139,92,246,0.3)') : 'none', 
                                              transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-                                             opacity: isAvailable ? 1 : 0.2
+                                             opacity: isAvailable ? 1 : 0.25
                                           }}
                                        >
                                           {day}
@@ -1192,14 +1200,21 @@ const CourseSkeleton = () => (
                                              return 'rgba(255,255,255,0.5)';
                                           };
                                           const getCleanLineText = (l: string) => {
-                                             if (l.startsWith('SUCCESS:')) return '✓ ' + l.substring(8);
-                                             if (l.startsWith('INFO:')) return '⚡ ' + l.substring(5);
-                                             if (l.startsWith('WARN:')) return '» ' + l.substring(5);
+                                             if (l.startsWith('SUCCESS:')) return l.substring(8);
+                                             if (l.startsWith('INFO:')) return l.substring(5);
+                                             if (l.startsWith('WARN:')) return l.substring(5);
                                              return l;
                                           };
+                                          const getBullet = (l: string) => {
+                                             if (l.startsWith('SUCCESS:')) return <span style={{ color: '#34d399', marginRight: '0.6rem' }}>●</span>;
+                                             if (l.startsWith('INFO:')) return <span style={{ color: '#c4b5fd', marginRight: '0.6rem' }}>●</span>;
+                                             if (l.startsWith('WARN:')) return <span style={{ color: '#fbbf24', marginRight: '0.6rem' }}>●</span>;
+                                             return null;
+                                          };
                                           return (
-                                             <div key={i} className="terminal-line" style={{ color: getLineColor(line) }}>
-                                                {getCleanLineText(line)}
+                                             <div key={i} className="terminal-line" style={{ display: 'flex', alignItems: 'center', color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginBottom: '0.15rem' }}>
+                                                {getBullet(line)}
+                                                <span>{getCleanLineText(line)}</span>
                                              </div>
                                           );
                                        })}
