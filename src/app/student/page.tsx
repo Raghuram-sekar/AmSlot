@@ -42,6 +42,7 @@ export default function StudentPortal() {
    const [activeProject, setActiveProject] = useState<any>(null);
    const [courseProjects, setCourseProjects] = useState<any[]>([]);
    const [myGroup, setMyGroup] = useState<any>(null);
+   const [myGroupMembers, setMyGroupMembers] = useState<any[]>([]);
 
    // Group Formation (wizard)
    const [groupStep, setGroupStep] = useState<'choose' | 'create' | 'join'>('choose');
@@ -83,6 +84,7 @@ export default function StudentPortal() {
       }
       await supabase.from('group_members').insert([{ group_id: groupData.id, student_id: user.id }]);
       setMyGroup({ ...groupData, members: 1 });
+      setMyGroupMembers([{ id: user.id, full_name: profile.full_name, email: profile.email }]);
       showToast(`Team created! Share code: ${inviteCode}`, "success");
       setGroupLoading(false);
    };
@@ -108,7 +110,12 @@ export default function StudentPortal() {
          setGroupLoading(false);
          return;
       }
-      setMyGroup({ ...groupData, members: (count || 0) + 1 });
+      const { data: membersData } = await supabase
+         .from('group_members')
+         .select('student_id, users(id, full_name, email)')
+         .eq('group_id', groupData.id);
+      setMyGroup({ ...groupData, members: membersData?.length || 1 });
+      setMyGroupMembers(membersData?.map((m: any) => m.users).filter(Boolean) || []);
       showToast(`Joined ${groupData.name}!`, "success");
       setGroupLoading(false);
    };
@@ -125,6 +132,7 @@ export default function StudentPortal() {
             const { error } = await supabase.from('group_members').delete().eq('group_id', myGroup.id).eq('student_id', user.id);
             if (!error) {
                setMyGroup(null);
+               setMyGroupMembers([]);
                setSelectedSlot(null);
                showToast("You have left the group.", "info");
             } else {
@@ -253,12 +261,20 @@ export default function StudentPortal() {
       const { data: memberData } = await supabase.from('group_members').select('group_id, groups(*)').eq('student_id', user.id);
       const activeGroupLink: any = memberData?.find((m: any) => m.groups && m.groups.project_id === project.id);
       if (activeGroupLink) {
-         const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', activeGroupLink.group_id);
+         const { data: membersData } = await supabase
+            .from('group_members')
+            .select('student_id, users(id, full_name, email)')
+            .eq('group_id', activeGroupLink.group_id);
+         
+         const count = membersData?.length || 0;
          setMyGroup({ ...activeGroupLink.groups, members: count || 1 });
+         setMyGroupMembers(membersData?.map((m: any) => m.users).filter(Boolean) || []);
+
          const { data: wlData } = await supabase.from('waitlist_entries').select('*').eq('group_id', activeGroupLink.group_id).eq('project_id', project.id).maybeSingle();
          setMyWaitlistEntry(wlData || null);
       } else {
          setMyGroup(null);
+         setMyGroupMembers([]);
          setMyWaitlistEntry(null);
       }
       const { data: evData } = await supabase.from('events').select('*').eq('project_id', project.id).order('date', { ascending: true });
@@ -482,6 +498,32 @@ export default function StudentPortal() {
                     }} />
                   </div>
                 </div>
+
+                {/* Squad Members List */}
+                {myGroupMembers && myGroupMembers.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.02)' }}>
+                    <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Squad Roster</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {myGroupMembers.map((member: any) => {
+                        const isLeader = member.id === myGroup.leader_id;
+                        const isMe = member.id === user.id;
+                        return (
+                          <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: isMe ? '#fff' : 'rgba(255,255,255,0.7)' }}>
+                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: isLeader ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isLeader ? '#fbbf24' : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 800, color: isLeader ? '#fbbf24' : 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
+                              {member.full_name?.substring(0, 2).toUpperCase() || 'ST'}
+                            </div>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isMe ? 700 : 500 }}>
+                              {member.full_name} {isMe && '(You)'}
+                            </span>
+                            {isLeader && (
+                              <span style={{ fontSize: '0.55rem', color: '#fbbf24', marginLeft: 'auto', fontWeight: 800 }}>LDR</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Tactical Actions Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 40px 40px', gap: '0.4rem' }}>
