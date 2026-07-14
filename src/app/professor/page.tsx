@@ -50,6 +50,7 @@ export default function ProfessorDashboard() {
   // Schedule Logic
   const [scheduleSlots, setScheduleSlots] = useState<any[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [activeScheduleDate, setActiveScheduleDate] = useState<string | null>(null);
 
   // Session Management Modal
   const [manageSlot, setManageSlot] = useState<any>(null);
@@ -313,7 +314,16 @@ export default function ProfessorDashboard() {
           if (a.event_date !== b.event_date) return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
           return a.start_time.localeCompare(b.start_time);
        });
-       setScheduleSlots(enriched);
+        setScheduleSlots(enriched);
+        if (enriched.length > 0) {
+           const uniqueDates = Array.from(new Set(enriched.map(s => s.event_date))).sort();
+           setActiveScheduleDate(prev => {
+              if (prev && uniqueDates.includes(prev)) return prev;
+              return uniqueDates[0] || null;
+           });
+        } else {
+           setActiveScheduleDate(null);
+        }
     }
     setScheduleLoading(false);
   };
@@ -708,57 +718,132 @@ export default function ProfessorDashboard() {
                       </div>
                     </header>
 
-                    <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
-                       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                         <span>Date & Time</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
-                       </div>
-                       
-                       {scheduleLoading ? (
+                    {scheduleLoading ? (
+                       <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                            <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
+                          </div>
                           <TableSkeleton />
-                       ) : scheduleSlots.length === 0 ? (
-                          <div className="empty-state" style={{ padding: '4rem', textAlign: 'center' }}>
-                             <div className="empty-state-icon" style={{ width: '64px', height: '64px', margin: '0 auto 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CalendarRange size={32} /></div>
-                             <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Timeline is Empty</h3>
-                             <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: '300px', margin: '0 auto' }}>Use the Slot Generator to mass-generate presentation blocks.</p>
-                          </div>
-                       ) : (
-                          <div>
-                            {scheduleSlots.map((slot) => {
-                               const start = slot.start_time.substring(0,5);
-                               const end = slot.end_time.substring(0,5);
-                               const hasGroup = slot.groups !== null;
-
-                               return (
-                                 <div key={slot.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.5rem 2rem', borderBottom: '1px solid var(--card-border)', alignItems: 'center' }}>
-                                    <div>
-                                       <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{start} - {end}</div>
-                                       <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.15rem' }}>{slot.event_date} ({slot.event_title})</div>
-                                    </div>
-                                    
-                                    <div>
-                                       {hasGroup ? (
-                                          <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
-                                       ) : (
-                                          <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>AVAILABLE</span>
-                                       )}
-                                    </div>
-                                    
-                                    <div>
-                                      {/* Status Badges */}
-                                      {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)' }}>Unbooked</span>}
-                                      {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)' }}>Scheduled</span>}
-                                      {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399' }}>Presented</span>}
-                                    </div>
-                                    
-                                    <div style={{ textAlign: 'right' }}>
-                                       <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
-                                    </div>
+                       </div>
+                    ) : scheduleSlots.length === 0 ? (
+                        <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+                           <div className="empty-state" style={{ padding: '4rem', textAlign: 'center' }}>
+                              <div className="empty-state-icon" style={{ width: '64px', height: '64px', margin: '0 auto 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CalendarRange size={32} /></div>
+                              <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Timeline is Empty</h3>
+                              <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: '300px', margin: '0 auto' }}>Use the Slot Generator to mass-generate presentation blocks.</p>
+                           </div>
+                        </div>
+                     ) : (
+                        (() => {
+                           const uniqueDates = Array.from(new Set(scheduleSlots.map(s => s.event_date))).sort();
+                           return (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2.5rem', alignItems: 'start' }}>
+                                 
+                                 {/* Date Strip Column */}
+                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '95px' }}>
+                                    <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.5rem' }}>Select Date</div>
+                                    {uniqueDates.map(dateStr => {
+                                       const d = new Date(dateStr + 'T00:00:00');
+                                       const isActive = activeScheduleDate === dateStr;
+                                       const slotsOnDay = scheduleSlots.filter(s => s.event_date === dateStr);
+                                       const bookedCount = slotsOnDay.filter(s => s.status === 'BOOKED' || s.status === 'PRESENTED').length;
+                                       const totalCount = slotsOnDay.length;
+                                       
+                                       return (
+                                          <button key={dateStr} onClick={() => setActiveScheduleDate(dateStr)}
+                                             style={{
+                                                padding: '1rem',
+                                                borderRadius: '16px',
+                                                textAlign: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                                                background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.02)',
+                                                border: `1px solid ${isActive ? 'transparent' : 'rgba(255,255,255,0.06)'}`,
+                                                boxShadow: isActive ? '0 12px 30px rgba(139,92,246,0.3)' : 'none',
+                                                transform: isActive ? 'scale(1.04)' : 'scale(1)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '0.15rem'
+                                             }}
+                                          >
+                                             <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)' }}>
+                                                {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                                             </div>
+                                             <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', lineHeight: 1, fontFamily: 'var(--font-outfit)' }}>
+                                                {d.getDate()}
+                                             </div>
+                                             <div style={{ fontSize: '0.65rem', color: isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)', marginBottom: '0.25rem' }}>
+                                                {d.toLocaleDateString('en-US', { month: 'short' })}
+                                             </div>
+                                             <div style={{
+                                                background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(139,92,246,0.1)',
+                                                borderRadius: '6px',
+                                                padding: '0.2rem 0.4rem',
+                                                fontSize: '0.65rem',
+                                                color: isActive ? '#fff' : 'var(--primary)',
+                                                fontWeight: 800,
+                                                whiteSpace: 'nowrap'
+                                             }}>
+                                                {bookedCount}/{totalCount} booked
+                                             </div>
+                                          </button>
+                                       );
+                                    })}
                                  </div>
-                               );
-                            })}
-                          </div>
-                       )}
-                    </div>
+
+                                 {/* Slots Table Column */}
+                                 <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', flex: 1, margin: 0 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                                      <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
+                                    </div>
+                                    
+                                    {scheduleSlots.filter(s => s.event_date === activeScheduleDate).length === 0 ? (
+                                       <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+                                          No slots scheduled for this date.
+                                       </div>
+                                    ) : (
+                                       <div>
+                                         {scheduleSlots.filter(s => s.event_date === activeScheduleDate).map((slot) => {
+                                            const start = slot.start_time.substring(0,5);
+                                            const end = slot.end_time.substring(0,5);
+                                            const hasGroup = slot.groups !== null;
+
+                                            return (
+                                              <div key={slot.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.5rem 2rem', borderBottom: '1px solid var(--card-border)', alignItems: 'center' }}>
+                                                 <div>
+                                                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{start} - {end}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.15rem' }}>{slot.event_title}</div>
+                                                 </div>
+                                                 
+                                                 <div>
+                                                    {hasGroup ? (
+                                                       <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
+                                                    ) : (
+                                                       <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.05)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', border: '1px solid rgba(52, 211, 153, 0.15)' }}>AVAILABLE</span>
+                                                    )}
+                                                 </div>
+                                                 
+                                                 <div>
+                                                   {/* Status Badges */}
+                                                   {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Unbooked</span>}
+                                                   {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
+                                                   {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
+                                                 </div>
+                                                 
+                                                 <div style={{ textAlign: 'right' }}>
+                                                    <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
+                                                 </div>
+                                              </div>
+                                            );
+                                         })}
+                                       </div>
+                                    )}
+                                 </div>
+                              </div>
+                           );
+                        })()
+                     )}
                  </div>
                )}
 
