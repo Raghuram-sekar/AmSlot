@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search } from 'lucide-react';
@@ -908,12 +908,25 @@ const CourseSkeleton = () => (
                     </header>
 
                     {scheduleLoading ? (
-                       <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                            <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
-                          </div>
-                          <TableSkeleton />
-                       </div>
+                        <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+                           <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: 'none' }}>
+                              <colgroup>
+                                 <col style={{ width: '25%' }} />
+                                 <col style={{ width: '30%' }} />
+                                 <col style={{ width: '25%' }} />
+                                 <col style={{ width: '20%' }} />
+                              </colgroup>
+                              <thead>
+                                 <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)' }}>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
+                                 </tr>
+                              </thead>
+                           </table>
+                           <TableSkeleton />
+                        </div>
                     ) : filteredScheduleSlots.length === 0 ? (
                         <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
                            <div className="empty-state" style={{ padding: '4rem', textAlign: 'center' }}>
@@ -984,50 +997,76 @@ const CourseSkeleton = () => (
 
                                  {/* Slots Table Column */}
                                  <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', flex: 1, margin: 0 }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                                      <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
-                                    </div>
-                                    
                                     {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).length === 0 ? (
-                                       <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
-                                          No slots scheduled for this date.
-                                       </div>
+                                       <>
+                                          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: 'none' }}>
+                                             <colgroup>
+                                                <col style={{ width: '25%' }} />
+                                                <col style={{ width: '30%' }} />
+                                                <col style={{ width: '25%' }} />
+                                                <col style={{ width: '20%' }} />
+                                             </colgroup>
+                                             <thead>
+                                                <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)' }}>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
+                                                </tr>
+                                             </thead>
+                                          </table>
+                                          <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+                                             No slots scheduled for this date.
+                                          </div>
+                                       </>
                                     ) : (
-                                       <div>
-                                         {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).map((slot) => {
-                                            const start = slot.start_time.substring(0,5);
-                                            const end = slot.end_time.substring(0,5);
-                                            const hasGroup = slot.groups !== null;
+                                       <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: 'none' }}>
+                                          <colgroup>
+                                             <col style={{ width: '25%' }} />
+                                             <col style={{ width: '30%' }} />
+                                             <col style={{ width: '25%' }} />
+                                             <col style={{ width: '20%' }} />
+                                          </colgroup>
+                                          <thead>
+                                             <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)' }}>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
+                                             </tr>
+                                          </thead>
+                                          <tbody>
+                                             {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).map((slot) => {
+                                                const start = slot.start_time.substring(0,5);
+                                                const end = slot.end_time.substring(0,5);
+                                                const hasGroup = slot.groups !== null;
 
-                                            return (
-                                              <div key={slot.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.5rem 2rem', borderBottom: '1px solid var(--card-border)', alignItems: 'center' }}>
-                                                 <div>
-                                                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{start} - {end}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.15rem' }}>{slot.event_title}</div>
-                                                 </div>
-                                                 
-                                                 <div>
-                                                    {hasGroup ? (
-                                                       <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
-                                                    ) : (
-                                                       <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.05)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', border: '1px solid rgba(52, 211, 153, 0.15)' }}>AVAILABLE</span>
-                                                    )}
-                                                 </div>
-                                                 
-                                                 <div>
-                                                   {/* Status Badges */}
-                                                   {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Unbooked</span>}
-                                                   {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
-                                                   {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
-                                                 </div>
-                                                 
-                                                 <div style={{ textAlign: 'right' }}>
-                                                    <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
-                                                 </div>
-                                              </div>
-                                            );
-                                         })}
-                                       </div>
+                                                return (
+                                                   <tr key={slot.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
+                                                      <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', border: 'none' }}>
+                                                         <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{start} - {end}</div>
+                                                         <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.15rem' }}>{slot.event_title}</div>
+                                                      </td>
+                                                      <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', border: 'none' }}>
+                                                         {hasGroup ? (
+                                                            <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
+                                                         ) : (
+                                                            <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.05)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', border: '1px solid rgba(52, 211, 153, 0.15)' }}>AVAILABLE</span>
+                                                         )}
+                                                      </td>
+                                                      <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', border: 'none' }}>
+                                                         {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Unbooked</span>}
+                                                         {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
+                                                         {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
+                                                      </td>
+                                                      <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', textAlign: 'right', border: 'none' }}>
+                                                         <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
+                                                      </td>
+                                                   </tr>
+                                                );
+                                             })}
+                                          </tbody>
+                                       </table>
                                     )}
                                  </div>
                               </div>
@@ -1661,77 +1700,89 @@ const CourseSkeleton = () => (
                     </header>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                       {/* Table Header Row */}
-                       {scheduleSlots.filter(s => s.status === 'PRESENTED' || s.status === 'ABSENT').length > 0 && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 0.5fr', padding: '0 2rem 0.75rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
-                             <span>Group Code</span>
-                             <span>Time Log</span>
-                             <span>Result</span>
-                             <span>Score</span>
-                             <span style={{ textAlign: 'right' }}>Details</span>
-                          </div>
-                       )}
-
-                       {scheduleSlots.filter(s => (s.status === 'PRESENTED' || s.status === 'ABSENT') && (s.groups?.name.toLowerCase().includes(searchTerm.toLowerCase()))).length === 0 ? (
-                          <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                             <FileText size={48} style={{ margin: '0 auto 1.5rem', opacity: 0.2 }} />
-                             <h3 style={{ color: '#fff', fontSize: '1.25rem' }}>{searchTerm ? 'No matches found' : 'No Records Yet'}</h3>
-                             <p style={{ color: 'rgba(255,255,255,0.5)' }}>{searchTerm ? `No results for "${searchTerm}"` : 'Grade sessions from the Master Schedule. Sealed records will appear here.'}</p>
-                          </div>
-                       ) : (
-                          scheduleSlots.filter(s => (s.status === 'PRESENTED' || s.status === 'ABSENT') && (s.groups?.name.toLowerCase().includes(searchTerm.toLowerCase()))).map(slot => {
-                             const isExpanded = expandedRecordId === slot.id;
-                             
-                             return (
-                                <div key={slot.id} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${isExpanded ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s' }}>
-                                   
-                                   {/* Collapsed Header Row */}
-                                   <div 
-                                      onClick={() => setExpandedRecordId(isExpanded ? null : slot.id)}
-                                      style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 0.5fr', alignItems: 'center', padding: '1.25rem 2rem', cursor: 'pointer', background: isExpanded ? 'rgba(139, 92, 246, 0.05)' : 'transparent' }}
-                                   >
-                                      <div>
-                                         <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>{slot.groups?.name || 'Unknown Group'}</div>
-                                      </div>
-                                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', fontWeight: 600 }}>
-                                         {slot.event_date} • {slot.start_time.substring(0,5)}
-                                      </div>
-                                      <div>
-                                         {slot.status === 'PRESENTED' ? (
-                                            <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', border: 'none' }}><CheckCircle2 size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Present</span>
-                                         ) : (
-                                            <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: 'none' }}><XOctagon size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Absent</span>
-                                         )}
-                                      </div>
-                                      <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>
-                                         {slot.grade || <span style={{ color: 'rgba(255,255,255,0.2)' }}>--/--</span>}
-                                      </div>
-                                      <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.4)' }}>
-                                         {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                                      </div>
-                                   </div>
-
-                                   {/* Expanded Details Panel */}
-                                   {isExpanded && (
-                                      <div className="animate-fade-in-down" style={{ padding: '0 2rem 2rem 2rem', borderTop: isExpanded ? '1px solid rgba(139, 92, 246, 0.2)' : 'none', marginTop: '0.5rem', paddingTop: '1.5rem', display: 'flex', gap: '2rem' }}>
-                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 800 }}>Professor Insights</div>
-                                            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', color: '#fff', fontSize: '1rem', lineHeight: '1.6', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                               {slot.private_notes || <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No notes provided for this session.</span>}
-                                            </div>
-                                         </div>
-                                         
-                                         <div style={{ width: '220px', background: 'linear-gradient(145deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0) 100%)', borderRadius: '12px', padding: '1.5rem', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                                            <div style={{ fontSize: '0.75rem', color: 'rgba(139, 92, 246, 0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: '0.5rem' }}>Final Extracted Score</div>
-                                            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{slot.grade || '--'}</div>
-                                         </div>
-                                      </div>
-                                   )}
-                                </div>
-                             )
-                          })
-                       )}
-                    </div>
+                        {/* Table Header Row */}
+                        {scheduleSlots.filter(s => s.status === 'PRESENTED' || s.status === 'ABSENT').length === 0 ? (
+                           <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                              <FileText size={48} style={{ margin: '0 auto 1.5rem', opacity: 0.2 }} />
+                              <h3 style={{ color: '#fff', fontSize: '1.25rem' }}>No Records Yet</h3>
+                              <p style={{ color: 'rgba(255,255,255,0.5)' }}>Grade sessions from the Master Schedule. Sealed records will appear here.</p>
+                           </div>
+                        ) : (
+                           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', overflow: 'hidden' }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: 'none' }}>
+                                 <colgroup>
+                                    <col style={{ width: '25%' }} />
+                                    <col style={{ width: '30%' }} />
+                                    <col style={{ width: '20%' }} />
+                                    <col style={{ width: '15%' }} />
+                                    <col style={{ width: '10%' }} />
+                                 </colgroup>
+                                 <thead>
+                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)' }}>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Group Code</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Time Log</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Result</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Score</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'right', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Details</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    {scheduleSlots.filter(s => (s.status === 'PRESENTED' || s.status === 'ABSENT') && (s.groups?.name.toLowerCase().includes(searchTerm.toLowerCase()))).map(slot => {
+                                       const isExpanded = expandedRecordId === slot.id;
+                                       
+                                       return (
+                                          <Fragment key={slot.id}>
+                                             <tr 
+                                                onClick={() => setExpandedRecordId(isExpanded ? null : slot.id)}
+                                                style={{ cursor: 'pointer', background: isExpanded ? 'rgba(139, 92, 246, 0.05)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}
+                                             >
+                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', border: 'none' }}>
+                                                   <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>{slot.groups?.name || 'Unknown Group'}</div>
+                                                </td>
+                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', fontWeight: 600, border: 'none' }}>
+                                                   {slot.event_date} • {slot.start_time.substring(0,5)}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', border: 'none' }}>
+                                                   {slot.status === 'PRESENTED' ? (
+                                                      <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', border: 'none', margin: 0 }}><CheckCircle2 size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Present</span>
+                                                   ) : (
+                                                      <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: 'none', margin: 0 }}><XOctagon size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Absent</span>
+                                                   )}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', fontWeight: 800, color: '#fff', fontSize: '1.1rem', border: 'none' }}>
+                                                   {slot.grade || <span style={{ color: 'rgba(255,255,255,0.2)' }}>--/--</span>}
+                                                </td>
+                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', textAlign: 'right', color: 'rgba(255,255,255,0.4)', border: 'none' }}>
+                                                   {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                                </td>
+                                             </tr>
+                                             {isExpanded && (
+                                                <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
+                                                   <td colSpan={5} style={{ padding: '0 2rem 2rem 2rem', border: 'none' }}>
+                                                      <div style={{ display: 'flex', gap: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                                                         <div style={{ flex: 1 }}>
+                                                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 800 }}>Professor Insights</div>
+                                                            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', color: '#fff', fontSize: '1rem', lineHeight: '1.6', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                                               {slot.private_notes || <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No notes provided for this session.</span>}
+                                                            </div>
+                                                         </div>
+                                                         
+                                                         <div style={{ width: '220px', background: 'linear-gradient(145deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0) 100%)', borderRadius: '12px', padding: '1.5rem', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <div style={{ fontSize: '0.75rem', color: 'rgba(139, 92, 246, 0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: '0.5rem' }}>Final Extracted Score</div>
+                                                            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{slot.grade || '--'}</div>
+                                                         </div>
+                                                      </div>
+                                                   </td>
+                                                </tr>
+                                             )}
+                                          </Fragment>
+                                       );
+                                    })}
+                                 </tbody>
+                              </table>
+                           </div>
+                        )}
+                     </div>
                  </div>
                )}
                {activeTab === 'settings' && (
