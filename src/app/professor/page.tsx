@@ -919,8 +919,8 @@ const CourseSkeleton = () => (
                               <thead>
                                  <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)' }}>
                                     <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
-                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
-                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
                                     <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
                                  </tr>
                               </thead>
@@ -1009,10 +1009,10 @@ const CourseSkeleton = () => (
                                              <thead>
                                                 <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)' }}>
                                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
-                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
-                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
                                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
-                                                </tr>
+                                                 </tr>
                                              </thead>
                                           </table>
                                           <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
@@ -1030,8 +1030,8 @@ const CourseSkeleton = () => (
                                           <thead>
                                              <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)' }}>
                                                 <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
-                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
-                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
                                                 <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
                                              </tr>
                                           </thead>
@@ -1048,19 +1048,25 @@ const CourseSkeleton = () => (
                                                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.15rem' }}>{slot.event_title}</div>
                                                       </td>
                                                       <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', border: 'none' }}>
-                                                         {hasGroup ? (
-                                                            <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
-                                                         ) : (
-                                                            <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.05)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', border: '1px solid rgba(52, 211, 153, 0.15)' }}>AVAILABLE</span>
-                                                         )}
+                                                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            {hasGroup ? (
+                                                               <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
+                                                            ) : (
+                                                               <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.05)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', border: '1px solid rgba(52, 211, 153, 0.15)' }}>AVAILABLE</span>
+                                                            )}
+                                                         </div>
                                                       </td>
                                                       <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', border: 'none' }}>
-                                                         {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Unbooked</span>}
-                                                         {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
-                                                         {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
+                                                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                            {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Unbooked</span>}
+                                                            {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
+                                                            {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
+                                                         </div>
                                                       </td>
                                                       <td style={{ padding: '1.5rem 2rem', verticalAlign: 'middle', textAlign: 'right', border: 'none' }}>
-                                                         <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
+                                                         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                            <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
+                                                         </div>
                                                       </td>
                                                    </tr>
                                                 );
@@ -1721,8 +1727,8 @@ const CourseSkeleton = () => (
                                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)' }}>
                                        <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Group Code</th>
                                        <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Time Log</th>
-                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Result</th>
-                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Score</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Result</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Score</th>
                                        <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'right', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Details</th>
                                     </tr>
                                  </thead>
@@ -1743,17 +1749,23 @@ const CourseSkeleton = () => (
                                                    {slot.event_date} • {slot.start_time.substring(0,5)}
                                                 </td>
                                                 <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', border: 'none' }}>
-                                                   {slot.status === 'PRESENTED' ? (
-                                                      <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', border: 'none', margin: 0 }}><CheckCircle2 size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Present</span>
-                                                   ) : (
-                                                      <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: 'none', margin: 0 }}><XOctagon size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Absent</span>
-                                                   )}
+                                                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                      {slot.status === 'PRESENTED' ? (
+                                                         <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', border: 'none', margin: 0 }}><CheckCircle2 size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Present</span>
+                                                      ) : (
+                                                         <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: 'none', margin: 0 }}><XOctagon size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Absent</span>
+                                                      )}
+                                                   </div>
                                                 </td>
-                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', fontWeight: 800, color: '#fff', fontSize: '1.1rem', border: 'none' }}>
-                                                   {slot.grade || <span style={{ color: 'rgba(255,255,255,0.2)' }}>--/--</span>}
+                                                <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', border: 'none' }}>
+                                                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>
+                                                      {slot.grade || <span style={{ color: 'rgba(255,255,255,0.2)' }}>--/--</span>}
+                                                   </div>
                                                 </td>
                                                 <td style={{ padding: '1.25rem 2rem', verticalAlign: 'middle', textAlign: 'right', color: 'rgba(255,255,255,0.4)', border: 'none' }}>
-                                                   {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                      {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                                   </div>
                                                 </td>
                                              </tr>
                                              {isExpanded && (
