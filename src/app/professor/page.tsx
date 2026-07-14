@@ -43,6 +43,9 @@ export default function ProfessorDashboard() {
   // Form states
   const [newCourseName, setNewCourseName] = useState('');
   const [newCourseSection, setNewCourseSection] = useState('');
+  const [editCourseName, setEditCourseName] = useState('');
+  const [editCourseSection, setEditCourseSection] = useState('');
+  const [updatingCourse, setUpdatingCourse] = useState(false);
 
   // Schedule Logic
   const [scheduleSlots, setScheduleSlots] = useState<any[]>([]);
@@ -158,6 +161,11 @@ export default function ProfessorDashboard() {
 
   const enterWorkspace = async (courseId: string) => {
     setActiveCourseId(courseId);
+    const active = courses.find(c => c.id === courseId);
+    if (active) {
+      setEditCourseName(active.name);
+      setEditCourseSection(active.section);
+    }
     setViewState('WORKSPACE');
     setActiveTab('schedule');
     loadWorkspacePulse(courseId);
@@ -395,8 +403,54 @@ export default function ProfessorDashboard() {
      document.body.appendChild(link);
      link.click();
      document.body.removeChild(link);
-     showToast("Grade Registry exported to CSV", "success");
-  };
+      showToast("Grade Registry exported to CSV", "success");
+   };
+
+   const handleUpdateCourse = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!activeCourseId || !editCourseName || !editCourseSection) return;
+      setUpdatingCourse(true);
+
+      const { error } = await supabase
+         .from('courses')
+         .update({
+            name: editCourseName,
+            section: editCourseSection
+         })
+         .eq('id', activeCourseId);
+
+      if (!error) {
+         setCourses(courses.map(c => c.id === activeCourseId ? { ...c, name: editCourseName, section: editCourseSection } : c));
+         showToast("Workspace details updated successfully.", "success");
+      } else {
+         showToast("Error updating workspace: " + error.message, "error");
+      }
+      setUpdatingCourse(false);
+   };
+
+   const handleDeleteCourse = () => {
+      if (!activeCourseId || !activeCourse) return;
+      setConfirmModal({
+         isOpen: true,
+         title: "Permanent Workspace Deletion",
+         message: `Are you sure you want to delete "${activeCourse.name}"? This will permanently wipe all assignments, slots, waitlists, student enrollments, and grades associated with this course.`,
+         onConfirm: async () => {
+            const { error } = await supabase
+               .from('courses')
+               .delete()
+               .eq('id', activeCourseId);
+
+            if (!error) {
+               showToast("Workspace wiped from system.", "success");
+               setCourses(courses.filter(c => c.id !== activeCourseId));
+               exitWorkspace();
+            } else {
+               showToast("Error deleting workspace: " + error.message, "error");
+            }
+            setConfirmModal(null);
+         }
+      });
+   };
 
   const handlePromoteFromWaitlist = async (entry: any) => {
     // 1. Find an available slot for this project
@@ -551,6 +605,9 @@ export default function ProfessorDashboard() {
               </button>
               <button onClick={() => setActiveTab('gradebook')} className={`tab-btn ${activeTab === 'gradebook' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'gradebook' ? 'var(--primary)' : 'transparent', color: activeTab === 'gradebook' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left', marginTop: '1rem' }}>
                 <FileText size={20} /> Grade Registry
+              </button>
+              <button onClick={() => setActiveTab('settings')} className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'settings' ? 'var(--primary)' : 'transparent', color: activeTab === 'settings' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left' }}>
+                <Settings size={20} /> Workspace Settings
               </button>
             </nav>
           </div>
@@ -1276,6 +1333,62 @@ export default function ProfessorDashboard() {
                        )}
                     </div>
                  </div>
+               )}
+               {activeTab === 'settings' && (
+                  <div className="animate-fade-in-up">
+                     <header style={{ marginBottom: '3rem' }}>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0 }}>Workspace Settings</h1>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem', maxWidth: '600px' }}>Manage workspace name, section, and system deletion.</p>
+                     </header>
+
+                     {/* Edit Course Form */}
+                     <div className="glass-panel" style={{ padding: '2.5rem', marginBottom: '2.5rem' }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1.5rem', color: '#fff' }}>Edit Details</h3>
+                        <form onSubmit={handleUpdateCourse} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '500px' }}>
+                           <div>
+                              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem', fontWeight: 600 }}>Course Name</label>
+                              <input 
+                                 type="text" 
+                                 value={editCourseName} 
+                                 onChange={e=>setEditCourseName(e.target.value)} 
+                                 required 
+                                 style={{ width: '100%', padding: '0.875rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                              />
+                           </div>
+                           
+                           <div>
+                              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem', fontWeight: 600 }}>Section / Batch</label>
+                              <input 
+                                 type="text" 
+                                 value={editCourseSection} 
+                                 onChange={e=>setEditCourseSection(e.target.value)} 
+                                 required 
+                                 style={{ width: '100%', padding: '0.875rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                              />
+                           </div>
+
+                           <button type="submit" disabled={updatingCourse} className="btn btn-primary" style={{ alignSelf: 'flex-start', padding: '0.875rem 2rem' }}>
+                              {updatingCourse ? 'Saving Changes...' : 'Save Changes'}
+                           </button>
+                        </form>
+                     </div>
+
+                     {/* Delete Course Area */}
+                     <div className="glass-panel" style={{ padding: '2.5rem', border: '1px solid rgba(244, 63, 94, 0.3)', background: 'rgba(244, 63, 94, 0.02)' }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: '#f43f5e' }}>Danger Zone</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.95rem' }}>Once you delete a workspace, there is no going back. All courses, projects, scheduled sessions, student grades, and groups will be permanently erased.</p>
+                        
+                        <button 
+                           type="button"
+                           onClick={handleDeleteCourse}
+                           style={{ padding: '1rem 2rem', background: '#f43f5e', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 16px rgba(244, 63, 94, 0.2)', transition: 'all 0.2s' }}
+                           onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                           onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                           Delete Workspace
+                        </button>
+                     </div>
+                  </div>
                )}
             </div>
          )}
