@@ -217,9 +217,7 @@ CREATE POLICY "Professors can update projects" ON public.projects FOR UPDATE TO 
 CREATE POLICY "Professors can delete projects" ON public.projects FOR DELETE TO authenticated USING (
   EXISTS (SELECT 1 FROM public.courses WHERE id = course_id AND professor_id = auth.uid())
 );
-CREATE POLICY "Students view projects" ON public.projects FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.course_enrollments WHERE course_id = public.projects.course_id AND student_id = auth.uid())
-);
+CREATE POLICY "Students view projects" ON public.projects FOR SELECT TO authenticated USING (true);
 
 -- groups: Professor-only control. Group members view.
 -- 1. Students can create and manage their groups (leader check)
@@ -278,9 +276,7 @@ CREATE POLICY "Professors can delete events" ON public.events FOR DELETE TO auth
     WHERE p.id = project_id AND c.professor_id = auth.uid()
   )
 );
-CREATE POLICY "Students view events" ON public.events FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.projects p JOIN public.course_enrollments ce ON p.course_id = ce.course_id WHERE p.id = public.events.project_id AND ce.student_id = auth.uid())
-);
+CREATE POLICY "Students view events" ON public.events FOR SELECT TO authenticated USING (true);
 
 -- slots: Professor-only control. Students can read and update (if available).
 CREATE POLICY "Professors can insert slots" ON public.slots FOR INSERT TO authenticated WITH CHECK (
@@ -322,9 +318,7 @@ CREATE POLICY "Professors can delete slots" ON public.slots FOR DELETE TO authen
     WHERE e.id = event_id AND c.professor_id = auth.uid()
   )
 );
-CREATE POLICY "Students view and book slots" ON public.slots FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.events e JOIN public.projects p ON e.project_id = p.id JOIN public.course_enrollments ce ON p.course_id = ce.course_id WHERE e.id = public.slots.event_id AND ce.student_id = auth.uid())
-);
+CREATE POLICY "Students view and book slots" ON public.slots FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Students can update own group slots" ON public.slots 
 FOR UPDATE 
 TO authenticated
