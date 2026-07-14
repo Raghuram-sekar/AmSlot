@@ -377,7 +377,7 @@ export default function ProfessorDashboard() {
     const projectIds = (projectRows || []).map((p: any) => p.id);
     if (projectIds.length === 0) { setScheduleSlots([]); setScheduleLoading(false); return; }
 
-    const { data: events } = await supabase.from('events').select('id, title, date').in('project_id', projectIds);
+    const { data: events } = await supabase.from('events').select('id, title, date, project_id').in('project_id', projectIds);
     if (!events || events.length === 0) { setScheduleSlots([]); setScheduleLoading(false); return; }
 
     const eventIds = events.map(e => e.id);
@@ -391,7 +391,7 @@ export default function ProfessorDashboard() {
     if (slots) {
        const enriched = slots.map(s => {
           const ev = events.find(e => e.id === s.event_id);
-          return { ...s, event_title: ev?.title, event_date: ev?.date };
+          return { ...s, event_title: ev?.title, event_date: ev?.date, project_id: ev?.project_id };
        });
        // Sort by date then time
        enriched.sort((a,b) => {
