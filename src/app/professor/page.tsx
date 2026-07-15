@@ -921,7 +921,7 @@ const CourseSkeleton = () => (
                                     <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
                                     <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
                                     <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
-                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
+                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
                                  </tr>
                               </thead>
                            </table>
@@ -1011,7 +1011,7 @@ const CourseSkeleton = () => (
                                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
                                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
                                                    <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
-                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
+                                                   <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
                                                 </tr>
                                              </thead>
                                           </table>
@@ -1032,7 +1032,7 @@ const CourseSkeleton = () => (
                                                 <th style={{ padding: '1.25rem 2rem', textAlign: 'left', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Time Slot</th>
                                                 <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Booked Group</th>
                                                 <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Status</th>
-                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'right', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
+                                                <th style={{ padding: '1.25rem 2rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, border: 'none' }}>Actions</th>
                                              </tr>
                                           </thead>
                                           <tbody>
@@ -1059,7 +1059,7 @@ const CourseSkeleton = () => (
                                                          {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
                                                          {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
                                                       </td>
-                                                      <td style={{ padding: '1.5rem 2rem', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>
+                                                      <td style={{ padding: '1.5rem 2rem', textAlign: 'center', verticalAlign: 'middle', border: 'none' }}>
                                                          <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
                                                       </td>
                                                    </tr>
@@ -1723,7 +1723,7 @@ const CourseSkeleton = () => (
                                        <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Time Log</th>
                                        <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Result</th>
                                        <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Score</th>
-                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'right', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Details</th>
+                                       <th style={{ padding: '1rem 2rem 0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, border: 'none' }}>Details</th>
                                     </tr>
                                  </thead>
                                  <tbody>
@@ -1752,7 +1752,7 @@ const CourseSkeleton = () => (
                                                 <td style={{ padding: '1.25rem 2rem', textAlign: 'center', verticalAlign: 'middle', border: 'none', fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>
                                                    {slot.grade || <span style={{ color: 'rgba(255,255,255,0.2)' }}>--/--</span>}
                                                 </td>
-                                                <td style={{ padding: '1.25rem 2rem', textAlign: 'right', verticalAlign: 'middle', border: 'none', color: 'rgba(255,255,255,0.4)' }}>
+                                                <td style={{ padding: '1.25rem 2rem', textAlign: 'center', verticalAlign: 'middle', border: 'none', color: 'rgba(255,255,255,0.4)' }}>
                                                    {isExpanded ? <ChevronDown size={20} style={{ display: 'inline-block', verticalAlign: 'middle' }} /> : <ChevronRight size={20} style={{ display: 'inline-block', verticalAlign: 'middle' }} />}
                                                 </td>
                                              </tr>
