@@ -20,6 +20,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'STUDENT' | 'PROFESSOR'>('STUDENT');
+  const [passcode, setPasscode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -53,6 +54,9 @@ export default function AuthPage() {
         }
       } else {
         // Sign Up
+        if (role === 'PROFESSOR' && passcode !== 'AS@prof') {
+          throw new Error("Invalid Professor Verification Passcode. Please contact the administrator.");
+        }
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -190,6 +194,23 @@ export default function AuthPage() {
                  <ShieldCheck size={20} color={role === 'PROFESSOR' ? '#34d399' : 'rgba(255,255,255,0.5)'} />
                  <span style={{ fontSize: '0.875rem', fontWeight: role === 'PROFESSOR' ? 700 : 500 }}>Professor</span>
                </button>
+            </div>
+          )}
+
+          {!isLogin && role === 'PROFESSOR' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Professor Verification Passcode</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                <input 
+                  type="password" 
+                  required
+                  value={passcode}
+                  onChange={e => setPasscode(e.target.value)}
+                  placeholder="Enter professor registration code" 
+                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                />
+              </div>
             </div>
           )}
 

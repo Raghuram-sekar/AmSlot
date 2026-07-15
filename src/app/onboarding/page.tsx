@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { GraduationCap, ShieldCheck, User } from 'lucide-react';
+import { GraduationCap, ShieldCheck, User, Lock } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
 export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<'STUDENT' | 'PROFESSOR'>('STUDENT');
   const [fullName, setFullName] = useState('');
+  const [passcode, setPasscode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const { showToast } = useToast();
@@ -58,6 +59,10 @@ export default function OnboardingPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No active session.");
+
+      if (role === 'PROFESSOR' && passcode !== 'AS@prof') {
+        throw new Error("Invalid Professor Verification Passcode. Please contact the administrator.");
+      }
 
       const { error } = await supabase
         .from('users')
@@ -154,6 +159,25 @@ export default function OnboardingPage() {
                </button>
             </div>
           </div>
+
+          {role === 'PROFESSOR' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.75rem', fontWeight: 600 }}>Professor Verification Passcode</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                <input 
+                  type="password" 
+                  required
+                  value={passcode}
+                  onChange={e => setPasscode(e.target.value)}
+                  placeholder="Enter professor registration code" 
+                  style={{ width: '100%', padding: '1rem 1rem 1rem 3rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', outline: 'none', transition: 'border-color 0.2s' }} 
+                  onFocus={e=>e.currentTarget.style.borderColor='var(--primary)'}
+                  onBlur={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.1)'}
+                />
+              </div>
+            </div>
+          )}
 
           <button 
             type="submit" 
