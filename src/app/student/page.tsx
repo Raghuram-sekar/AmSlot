@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
    CalendarDays, Users, CheckCircle2, Lock, ArrowRight, Hourglass, UserPlus,
    Clock, ArrowLeft, ChevronRight, Hash, LogOut, XOctagon, ListOrdered,
-   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X
+   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
@@ -52,6 +52,10 @@ export default function StudentPortal() {
 
    // Copy-to-clipboard flash
    const [codeCopied, setCodeCopied] = useState(false);
+
+   // Group Rename
+   const [isRenamingGroup, setIsRenamingGroup] = useState(false);
+   const [tempGroupName, setTempGroupName] = useState('');
 
    // Booking UI
    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -175,6 +179,27 @@ export default function StudentPortal() {
           }
        });
     };
+
+    const handleRenameGroup = async () => {
+       if (!tempGroupName.trim() || tempGroupName.trim() === myGroup.name) {
+          setIsRenamingGroup(false);
+          return;
+       }
+       const newName = tempGroupName.trim();
+       const { error } = await supabase
+          .from('groups')
+          .update({ name: newName })
+          .eq('id', myGroup.id);
+       
+       if (error) {
+          showToast("Error renaming group: " + error.message, "error");
+       } else {
+          setMyGroup((prev: any) => prev ? { ...prev, name: newName } : null);
+          showToast("Group renamed successfully!", "success");
+       }
+       setIsRenamingGroup(false);
+    };
+
    const handleCancelBooking = async () => {
       const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
       if (!myCurrentBooking) return;
@@ -594,9 +619,50 @@ export default function StudentPortal() {
 
                 {/* Team Info Chip */}
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
+                  <div style={{ flex: 1, minWidth: 0, marginRight: '0.5rem' }}>
                     <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em' }}>Assigned Squad</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#34d399' }}>{myGroup.name}</div>
+                    {isRenamingGroup ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                        <input
+                           type="text"
+                           value={tempGroupName}
+                           onChange={e => setTempGroupName(e.target.value)}
+                           style={{
+                              background: 'rgba(0,0,0,0.5)',
+                              border: '1px solid #34d399',
+                              borderRadius: '6px',
+                              color: '#fff',
+                              fontSize: '0.85rem',
+                              fontWeight: 800,
+                              padding: '0.15rem 0.4rem',
+                              width: '120px',
+                              outline: 'none',
+                              fontFamily: 'var(--font-outfit)'
+                           }}
+                           autoFocus
+                           onKeyDown={e => {
+                              if (e.key === 'Enter') handleRenameGroup();
+                              if (e.key === 'Escape') setIsRenamingGroup(false);
+                           }}
+                        />
+                        <button onClick={handleRenameGroup} style={{ background: 'transparent', border: 'none', color: '#34d399', cursor: 'pointer', padding: '0.1rem', display: 'flex', alignItems: 'center' }}><Check size={14} /></button>
+                        <button onClick={() => setIsRenamingGroup(false)} style={{ background: 'transparent', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: '0.1rem', display: 'flex', alignItems: 'center' }}><X size={14} /></button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#34d399', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{myGroup.name}</div>
+                        {myGroup.leader_id === user.id && (
+                           <button onClick={() => { setIsRenamingGroup(true); setTempGroupName(myGroup.name); }} 
+                              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                              onMouseOver={e => e.currentTarget.style.color = '#34d399'}
+                              onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+                              title="Rename Team"
+                           >
+                              <Pencil size={12} />
+                           </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {myGroup.leader_id === user.id ? (
                     <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.6rem', color: '#fbbf24', fontWeight: 800, textTransform: 'uppercase' }}>Leader</div>
