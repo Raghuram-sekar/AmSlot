@@ -327,6 +327,12 @@ USING (
     SELECT 1 FROM public.groups g 
     WHERE g.id = public.slots.group_id AND g.leader_id = auth.uid()
   )
+)
+WITH CHECK (
+  group_id IS NULL OR EXISTS (
+    SELECT 1 FROM public.groups g 
+    WHERE g.id = group_id AND g.leader_id = auth.uid()
+  )
 );
 
 -- waitlist_entries: Members view/update own. Professors view all.
