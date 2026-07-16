@@ -1175,7 +1175,7 @@ export default function StudentPortal() {
                                     const slotsOnDay = slots.filter(s => events.find(e => e.id === s.event_id)?.date === ev.date);
                                     const availableCount = slotsOnDay.filter(s => s.status === 'AVAILABLE').length;
                                     return (
-                                       <button key={ev.id} onClick={() => setActiveDate(ev.date)}
+                                       <button key={ev.id} onClick={() => { setActiveDate(ev.date); setSelectedSlot(null); }}
                                           style={{ padding: '0.875rem 1.25rem', borderRadius: '14px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isActive ? 'transparent' : 'rgba(255,255,255,0.06)'}`, boxShadow: isActive ? '0 8px 20px rgba(139,92,246,0.3)' : 'none', transform: isActive ? 'scale(1.04)' : 'scale(1)', minWidth: '80px' }}
                                        >
                                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)', marginBottom: '0.3rem' }}>
