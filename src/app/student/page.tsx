@@ -717,18 +717,8 @@ export default function StudentPortal() {
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.2rem' }}>Student Profile</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '-0.01em', lineHeight: 1.2, wordBreak: 'break-word' }}>
-                        {profile?.full_name || 'Student'}
-                      </div>
-                      <button onClick={() => { setEditNameInput(profile?.full_name || ''); setEditRollInput(profile?.roll_number || ''); setEditProfileOpen(true); }}
-                         style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', padding: '0.1rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                         onMouseOver={e => e.currentTarget.style.color = '#34d399'}
-                         onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
-                         title="Edit Profile & Roll Number"
-                      >
-                         <Pencil size={12} />
-                      </button>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '-0.01em', lineHeight: 1.2, wordBreak: 'break-word' }}>
+                      {profile?.full_name || 'Student'}
                     </div>
                     {profile?.roll_number ? (
                       <div style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 800, marginTop: '0.15rem', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
