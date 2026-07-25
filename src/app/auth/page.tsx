@@ -324,8 +324,15 @@ export default function AuthPage() {
                 placeholder="123456" 
                 style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--primary)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '1.5rem', letterSpacing: '0.4em', textAlign: 'center', fontFamily: 'monospace' }} 
               />
+              {pendingUser?.generatedOtp && (
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(52, 211, 153, 0.1)', border: '1px dashed rgba(52, 211, 153, 0.3)', borderRadius: '8px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 600 }}>
+                    AmSlot Verification Code: <span style={{ fontFamily: 'monospace', fontSize: '1rem', letterSpacing: '2px', textDecoration: 'underline' }}>{pendingUser.generatedOtp}</span>
+                  </span>
+                </div>
+              )}
               <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem', textAlign: 'center' }}>
-                Check your Amrita inbox or spam folder. If email confirmation is disabled in Supabase, click Back to Sign In.
+                Type the 6-digit code above to verify your Amrita email and activate your account.
               </p>
             </div>
 
