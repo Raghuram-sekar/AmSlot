@@ -7,12 +7,24 @@ import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings,
 import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 
-// ─── Roll Number Parser ───────────────────────────────────────────────────────
+// ─── Roll Number Formatter & Parser ──────────────────────────────────────────
+export function formatFullRollNumber(roll: string | null | undefined): string {
+   if (!roll || roll === 'N/A') return 'N/A';
+   let clean = roll.trim().toUpperCase();
+   if (clean.startsWith('U4')) {
+      return 'CB.SC.' + clean;
+   }
+   if (clean.startsWith('CBSC.')) {
+      return 'CB.SC.' + clean.replace('CBSC.', '');
+   }
+   return clean;
+}
+
 export function parseAmritaRollNumber(input: string | null | undefined) {
    if (!input) return { rawRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
    
-   const rawRoll = input.trim();
-   let clean = rawRoll.toUpperCase();
+   const formatted = formatFullRollNumber(input);
+   let clean = formatted.toUpperCase();
    if (clean.includes('@')) clean = clean.split('@')[0];
 
    let matchStr = clean;
@@ -29,7 +41,7 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
       const sectionName = secMap[secCode] ? `Section ${secMap[secCode]}` : `Sec ${secCode}`;
       
       return {
-         rawRoll,
+         rawRoll: formatted,
          dept,
          year,
          section: sectionName,
@@ -39,11 +51,11 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
    }
 
    return {
-      rawRoll,
+      rawRoll: formatted,
       dept: '',
       year: '',
       section: 'General',
-      shortRoll: rawRoll,
+      shortRoll: formatted,
       isValid: false
    };
 }
@@ -434,12 +446,13 @@ export default function ProfessorDashboard() {
 
     const list = enrollData.map((item: any) => {
        const u = item.users;
-       const parsed = parseAmritaRollNumber(u?.roll_number);
+       const fullRoll = formatFullRollNumber(u?.roll_number);
+       const parsed = parseAmritaRollNumber(fullRoll);
        return {
           id: u?.id || item.student_id,
           full_name: u?.full_name || 'Unknown Student',
           email: u?.email || 'N/A',
-          roll_number: u?.roll_number || 'N/A',
+          roll_number: fullRoll,
           parsedRoll: parsed,
           teamName: groupMap.get(item.student_id) || null,
           joined_at: item.joined_at
@@ -459,7 +472,7 @@ export default function ProfessorDashboard() {
      const rows = directoryStudents.map(s => [
         `"${(s.full_name || '').replace(/"/g, '""')}"`,
         `"${s.parsedRoll.section}"`,
-        `"${s.roll_number || 'N/A'}"`,
+        `"${formatFullRollNumber(s.roll_number)}"`,
         `"${s.teamName || 'No Team'}"`,
         `"${s.email}"`,
         `"${new Date(s.joined_at).toLocaleString()}"`
@@ -2084,7 +2097,7 @@ const CourseSkeleton = () => (
                                                 </span>
                                              </td>
                                              <td style={{ padding: '1.1rem 1.5rem', color: '#34d399', fontWeight: 800, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                                                {st.roll_number || 'N/A'}
+                                                {formatFullRollNumber(st.roll_number)}
                                              </td>
                                              <td style={{ padding: '1.1rem 1.5rem' }}>
                                                 {st.teamName ? (

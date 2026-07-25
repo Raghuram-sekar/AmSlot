@@ -20,12 +20,24 @@ interface ConfirmModalState {
    onConfirm: () => void;
 }
 
-// ─── Roll Number Parser ───────────────────────────────────────────────────────
+// ─── Roll Number Formatter & Parser ──────────────────────────────────────────
+export function formatFullRollNumber(roll: string | null | undefined): string {
+   if (!roll || roll === 'N/A') return 'N/A';
+   let clean = roll.trim().toUpperCase();
+   if (clean.startsWith('U4')) {
+      return 'CB.SC.' + clean;
+   }
+   if (clean.startsWith('CBSC.')) {
+      return 'CB.SC.' + clean.replace('CBSC.', '');
+   }
+   return clean;
+}
+
 export function parseAmritaRollNumber(input: string | null | undefined) {
    if (!input) return { rawRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
    
-   const rawRoll = input.trim();
-   let clean = rawRoll.toUpperCase();
+   const formatted = formatFullRollNumber(input);
+   let clean = formatted.toUpperCase();
    if (clean.includes('@')) clean = clean.split('@')[0];
 
    let matchStr = clean;
@@ -42,7 +54,7 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
       const sectionName = secMap[secCode] ? `Section ${secMap[secCode]}` : `Sec ${secCode}`;
       
       return {
-         rawRoll,
+         rawRoll: formatted,
          dept,
          year,
          section: sectionName,
@@ -52,11 +64,11 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
    }
 
    return {
-      rawRoll,
+      rawRoll: formatted,
       dept: '',
       year: '',
       section: 'General',
-      shortRoll: rawRoll,
+      shortRoll: formatted,
       isValid: false
    };
 }
@@ -251,17 +263,21 @@ export default function StudentPortal() {
        if (!user || !editNameInput.trim()) return;
        setEditProfileSaving(true);
        
-       const cleanRoll = editRollInput.trim().toUpperCase();
+       let rollToSave = editRollInput.trim().toUpperCase();
+       if (rollToSave.startsWith('U4')) {
+          rollToSave = 'CB.SC.' + rollToSave;
+       }
+       
        const { error } = await supabase
           .from('users')
           .update({
              full_name: editNameInput.trim(),
-             roll_number: cleanRoll
+             roll_number: rollToSave
           })
           .eq('id', user.id);
 
        if (!error) {
-          setProfile((prev: any) => ({ ...prev, full_name: editNameInput.trim(), roll_number: cleanRoll }));
+          setProfile((prev: any) => ({ ...prev, full_name: editNameInput.trim(), roll_number: rollToSave }));
           showToast("Profile updated successfully!", "success");
           setEditProfileOpen(false);
        } else {
@@ -715,8 +731,8 @@ export default function StudentPortal() {
                       </button>
                     </div>
                     {profile?.roll_number ? (
-                      <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, marginTop: '0.15rem', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                         #{profile.roll_number}
+                      <div style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 800, marginTop: '0.15rem', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                         {formatFullRollNumber(profile.roll_number)}
                       </div>
                     ) : (
                       <div style={{ fontSize: '0.65rem', color: '#f43f5e', fontWeight: 700, marginTop: '0.15rem' }}>
