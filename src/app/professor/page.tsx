@@ -9,14 +9,17 @@ import { useToast } from '@/components/ToastProvider';
 
 // ─── Roll Number Parser ───────────────────────────────────────────────────────
 export function parseAmritaRollNumber(input: string | null | undefined) {
-   if (!input) return { cleanRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
+   if (!input) return { rawRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
    
-   let clean = input.toUpperCase().trim();
+   const rawRoll = input.trim();
+   let clean = rawRoll.toUpperCase();
    if (clean.includes('@')) clean = clean.split('@')[0];
-   if (clean.startsWith('CB.SC.')) clean = clean.replace('CB.SC.', '');
-   if (clean.startsWith('CBSC')) clean = clean.replace('CBSC', '');
 
-   const match = clean.match(/^U4([A-Z]{3,4})(\d{2})(\d)(\d{2,3})$/);
+   let matchStr = clean;
+   if (matchStr.startsWith('CB.SC.')) matchStr = matchStr.replace('CB.SC.', '');
+   if (matchStr.startsWith('CBSC')) matchStr = matchStr.replace('CBSC', '');
+
+   const match = matchStr.match(/^U4([A-Z]{3,4})(\d{2})(\d)(\d{2,3})$/);
    if (match) {
       const dept = match[1];
       const year = '20' + match[2];
@@ -26,7 +29,7 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
       const sectionName = secMap[secCode] ? `Section ${secMap[secCode]}` : `Sec ${secCode}`;
       
       return {
-         cleanRoll: clean,
+         rawRoll,
          dept,
          year,
          section: sectionName,
@@ -36,11 +39,11 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
    }
 
    return {
-      cleanRoll: clean,
+      rawRoll,
       dept: '',
       year: '',
       section: 'General',
-      shortRoll: clean,
+      shortRoll: rawRoll,
       isValid: false
    };
 }
@@ -1956,26 +1959,64 @@ const CourseSkeleton = () => (
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                           <select value={directoryFilter} onChange={e => setDirectoryFilter(e.target.value)}
-                              style={{ padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
-                           >
-                              <option value="ALL">All Students</option>
-                              <option value="SEC_A">Section A</option>
-                              <option value="SEC_B">Section B</option>
-                              <option value="SEC_C">Section C</option>
-                              <option value="SEC_D">Section D</option>
-                              <option value="ASSIGNED">Team Assigned</option>
-                              <option value="UNASSIGNED">Unassigned</option>
-                           </select>
+                           {/* Custom Filter Select */}
+                           <div style={{ position: 'relative' }}>
+                              <select value={directoryFilter} onChange={e => setDirectoryFilter(e.target.value)}
+                                 style={{
+                                    padding: '0.875rem 2.5rem 0.875rem 1.25rem',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '14px',
+                                    color: '#fff',
+                                    outline: 'none',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    appearance: 'none',
+                                    WebkitAppearance: 'none',
+                                    MozAppearance: 'none',
+                                    fontFamily: 'var(--font-outfit)',
+                                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                                 }}
+                              >
+                                 <option value="ALL" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>All Students</option>
+                                 <option value="SEC_A" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Section A</option>
+                                 <option value="SEC_B" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Section B</option>
+                                 <option value="SEC_C" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Section C</option>
+                                 <option value="SEC_D" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Section D</option>
+                                 <option value="ASSIGNED" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Team Assigned</option>
+                                 <option value="UNASSIGNED" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Unassigned</option>
+                              </select>
+                              <ChevronDown size={14} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }} />
+                           </div>
 
-                           <select value={directorySort} onChange={e => setDirectorySort(e.target.value)}
-                              style={{ padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
-                           >
-                              <option value="NAME">Sort by Name (A-Z)</option>
-                              <option value="ROLL">Sort by Roll Number</option>
-                              <option value="SECTION">Sort by Section</option>
-                              <option value="TEAM">Sort by Team Name</option>
-                           </select>
+                           {/* Custom Sort Select */}
+                           <div style={{ position: 'relative' }}>
+                              <select value={directorySort} onChange={e => setDirectorySort(e.target.value)}
+                                 style={{
+                                    padding: '0.875rem 2.5rem 0.875rem 1.25rem',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '14px',
+                                    color: '#fff',
+                                    outline: 'none',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    appearance: 'none',
+                                    WebkitAppearance: 'none',
+                                    MozAppearance: 'none',
+                                    fontFamily: 'var(--font-outfit)',
+                                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                                 }}
+                              >
+                                 <option value="NAME" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Sort by Name (A-Z)</option>
+                                 <option value="ROLL" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Sort by Roll Number</option>
+                                 <option value="SECTION" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Sort by Section</option>
+                                 <option value="TEAM" style={{ background: '#18181b', color: '#fff', padding: '0.5rem' }}>Sort by Team Name</option>
+                              </select>
+                              <ChevronDown size={14} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }} />
+                           </div>
                         </div>
                      </div>
 

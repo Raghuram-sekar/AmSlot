@@ -22,14 +22,17 @@ interface ConfirmModalState {
 
 // ─── Roll Number Parser ───────────────────────────────────────────────────────
 export function parseAmritaRollNumber(input: string | null | undefined) {
-   if (!input) return { cleanRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
+   if (!input) return { rawRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
    
-   let clean = input.toUpperCase().trim();
+   const rawRoll = input.trim();
+   let clean = rawRoll.toUpperCase();
    if (clean.includes('@')) clean = clean.split('@')[0];
-   if (clean.startsWith('CB.SC.')) clean = clean.replace('CB.SC.', '');
-   if (clean.startsWith('CBSC')) clean = clean.replace('CBSC', '');
 
-   const match = clean.match(/^U4([A-Z]{3,4})(\d{2})(\d)(\d{2,3})$/);
+   let matchStr = clean;
+   if (matchStr.startsWith('CB.SC.')) matchStr = matchStr.replace('CB.SC.', '');
+   if (matchStr.startsWith('CBSC')) matchStr = matchStr.replace('CBSC', '');
+
+   const match = matchStr.match(/^U4([A-Z]{3,4})(\d{2})(\d)(\d{2,3})$/);
    if (match) {
       const dept = match[1];
       const year = '20' + match[2];
@@ -39,7 +42,7 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
       const sectionName = secMap[secCode] ? `Section ${secMap[secCode]}` : `Sec ${secCode}`;
       
       return {
-         cleanRoll: clean,
+         rawRoll,
          dept,
          year,
          section: sectionName,
@@ -49,11 +52,11 @@ export function parseAmritaRollNumber(input: string | null | undefined) {
    }
 
    return {
-      cleanRoll: clean,
+      rawRoll,
       dept: '',
       year: '',
       section: 'General',
-      shortRoll: clean,
+      shortRoll: rawRoll,
       isValid: false
    };
 }
@@ -614,15 +617,30 @@ export default function StudentPortal() {
             {viewState === 'PORTAL' && (
                <div style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.06), rgba(139,92,246,0.04))', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '16px', padding: '1.25rem', marginBottom: '2rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                     <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: 'linear-gradient(135deg, #34d399, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '1.1rem', fontFamily: 'var(--font-outfit)' }}>
+                     <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: 'linear-gradient(135deg, #34d399, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '1.1rem', fontFamily: 'var(--font-outfit)', flexShrink: 0 }}>
                         {profile?.full_name?.substring(0, 2).toUpperCase() || 'ST'}
                      </div>
-                     <div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>{profile?.full_name || 'Student'}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
-                           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
-                           <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Student</span>
+                     <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                           <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.full_name || 'Student'}</div>
+                           <button onClick={() => { setEditNameInput(profile?.full_name || ''); setEditRollInput(profile?.roll_number || ''); setEditProfileOpen(true); }}
+                              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s', flexShrink: 0 }}
+                              onMouseOver={e => e.currentTarget.style.color = '#34d399'}
+                              onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+                              title="Edit Profile Credentials"
+                           >
+                              <Pencil size={14} />
+                           </button>
                         </div>
+                        {profile?.roll_number ? (
+                           <div style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 800, marginTop: '0.15rem', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                              {profile.roll_number}
+                           </div>
+                        ) : (
+                           <div style={{ fontSize: '0.65rem', color: '#f43f5e', fontWeight: 700, marginTop: '0.15rem' }}>
+                              ⚠️ Missing Roll Number
+                           </div>
+                        )}
                      </div>
                   </div>
                </div>
