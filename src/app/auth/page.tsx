@@ -45,6 +45,11 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // OTP Verification state
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [pendingUser, setPendingUser] = useState<any>(null);
+
   const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -56,7 +61,7 @@ export default function AuthPage() {
       if (isLogin) {
         // Sign In
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim().toLowerCase(),
           password
         });
         
@@ -75,7 +80,8 @@ export default function AuthPage() {
         }
       } else {
         // Sign Up - Enforce Amrita Email Domain
-        if (!isAmritaEmail(email)) {
+        const cleanEmail = email.trim().toLowerCase();
+        if (!isAmritaEmail(cleanEmail)) {
           throw new Error("Registration restricted: Only official Amrita University email IDs (@cb.students.amrita.edu, @amrita.edu) are allowed.");
         }
 
@@ -83,42 +89,101 @@ export default function AuthPage() {
         const { data: existingUser } = await supabase
           .from('users')
           .select('id')
-          .eq('email', email.trim().toLowerCase())
+          .eq('email', cleanEmail)
           .maybeSingle();
 
         if (existingUser) {
-          throw new Error("This Amrita email address is already registered. Please sign in instead.");
+          throw new Error("This Amrita email address is already registered. Please log in instead.");
+        }
+
+        // Auto-extract roll number from email prefix
+        let autoRoll = '';
+        const prefix = cleanEmail.split('@')[0].toUpperCase();
+        const match = prefix.match(/U4[A-Z]{3,4}\d+/);
+        if (match) {
+          autoRoll = 'CB.SC.' + match[0];
+          
+          // Check duplicate roll number
+          const { data: existingRoll } = await supabase
+            .from('users')
+            .select('id')
+            .eq('roll_number', autoRoll)
+            .maybeSingle();
+
+          if (existingRoll) {
+            throw new Error(`The roll number ${autoRoll} is already registered to another account.`);
+          }
         }
 
         if (role === 'PROFESSOR' && passcode !== 'AS@prof') {
           throw new Error("Invalid Professor Verification Passcode. Please contact the administrator.");
         }
+
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(),
+          email: cleanEmail,
           password,
         });
 
         if (signUpError) throw signUpError;
-        if (!authData.user) throw new Error("Auto-login failed after signup.");
+        if (!authData.user) throw new Error("Verification trigger failed. Please check credentials.");
 
-        // Insert into public.users
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([
-            { id: authData.user.id, email: email.trim().toLowerCase(), full_name: fullName, role }
-          ]);
+        setPendingUser({
+          id: authData.user.id,
+          email: cleanEmail,
+          full_name: fullName,
+          role,
+          roll_number: autoRoll || null
+        });
 
-        if (insertError) throw insertError;
-
-        // Redirect based on role
-        if (role === 'PROFESSOR') {
-          router.push('/professor');
-        } else {
-          router.push('/student');
-        }
+        // Open OTP verification step
+        setOtpStep(true);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode.trim() || !pendingUser) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: pendingUser.email,
+        token: otpCode.trim(),
+        type: 'signup'
+      });
+
+      if (verifyError) throw verifyError;
+
+      // Insert profile into public.users
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: pendingUser.id,
+            email: pendingUser.email,
+            full_name: pendingUser.full_name,
+            role: pendingUser.role,
+            roll_number: pendingUser.roll_number
+          }
+        ]);
+
+      if (insertError && !insertError.message.includes('duplicate')) {
+        throw insertError;
+      }
+
+      if (pendingUser.role === 'PROFESSOR') {
+        router.push('/professor');
+      } else {
+        router.push('/student');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Invalid or expired OTP verification code.');
     } finally {
       setLoading(false);
     }
@@ -170,9 +235,13 @@ export default function AuthPage() {
             <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
             <div className="logo-core" style={{ borderRadius: '8px' }}><Hourglass size={16} color="#fff" /></div>
           </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>{isLogin ? 'Welcome Back' : 'Create Account'}</h1>
-          <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-            {isLogin ? 'Enter your credentials to access your workspace' : 'Join AmSlot to securely manage project reviews'}
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>
+            {otpStep ? 'Verify Amrita Email' : isLogin ? 'Welcome Back' : 'Create Account'}
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '0.5rem', fontSize: '0.875rem', textAlign: 'center' }}>
+            {otpStep 
+              ? `We sent a 6-digit OTP code to ${pendingUser?.email || 'your email'}`
+              : isLogin ? 'Enter your credentials to access your workspace' : 'Join AmSlot to securely manage project reviews'}
           </p>
         </div>
 
@@ -182,153 +251,189 @@ export default function AuthPage() {
           </div>
         )}
 
-        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {!isLogin && (
+        {otpStep ? (
+          <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Full Name</label>
-              <div style={{ position: 'relative' }}>
-                <User size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
-                <input 
-                  type="text" 
-                  required
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  placeholder="John Doe" 
-                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Email Address</label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem', fontWeight: 600 }}>6-Digit OTP Code</label>
               <input 
-                type="email" 
+                type="text" 
+                maxLength={6}
                 required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@university.edu" 
-                style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value)}
+                placeholder="123456" 
+                style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--primary)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '1.5rem', letterSpacing: '0.4em', textAlign: 'center', fontFamily: 'monospace' }} 
               />
             </div>
-          </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
-              <input 
-                type="password"
-                required 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••" 
-                style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-              />
-            </div>
-          </div>
+            <button 
+              type="submit" 
+              className="btn btn-primary pulse-glow" 
+              style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '0.5rem', opacity: loading ? 0.7 : 1 }}
+              disabled={loading}
+            >
+              {loading ? 'Verifying OTP...' : 'Verify & Complete Signup'}
+            </button>
 
-          {!isLogin && (
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-               <button 
-                  type="button"
-                  onClick={() => setRole('STUDENT')}
-                  style={{ flex: 1, padding: '0.875rem', borderRadius: '10px', background: role === 'STUDENT' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255,255,255,0.02)', border: `1px solid ${role === 'STUDENT' ? 'var(--primary)' : 'var(--card-border)'}`, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'all 0.2s' }}
-               >
-                 <GraduationCap size={20} color={role === 'STUDENT' ? 'var(--primary)' : 'rgba(255,255,255,0.5)'} />
-                 <span style={{ fontSize: '0.875rem', fontWeight: role === 'STUDENT' ? 700 : 500 }}>Student</span>
-               </button>
-               <button 
-                  type="button"
-                  onClick={() => setRole('PROFESSOR')}
-                  style={{ flex: 1, padding: '0.875rem', borderRadius: '10px', background: role === 'PROFESSOR' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255,255,255,0.02)', border: `1px solid ${role === 'PROFESSOR' ? '#34d399' : 'var(--card-border)'}`, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'all 0.2s' }}
-               >
-                 <ShieldCheck size={20} color={role === 'PROFESSOR' ? '#34d399' : 'rgba(255,255,255,0.5)'} />
-                 <span style={{ fontSize: '0.875rem', fontWeight: role === 'PROFESSOR' ? 700 : 500 }}>Professor</span>
-               </button>
-            </div>
-          )}
+            <button 
+              type="button"
+              onClick={() => { setOtpStep(false); setError(null); }}
+              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline', marginTop: '0.5rem' }}
+            >
+              ← Back to Registration
+            </button>
+          </form>
+        ) : (
+          <>
+            <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {!isLogin && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Full Name</label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                    <input 
+                      type="text" 
+                      required
+                      value={fullName}
+                      onChange={e => setFullName(e.target.value)}
+                      placeholder="John Doe" 
+                      style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                    />
+                  </div>
+                </div>
+              )}
 
-          {!isLogin && role === 'PROFESSOR' && (
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Professor Verification Passcode</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
-                <input 
-                  type="password" 
-                  required
-                  value={passcode}
-                  onChange={e => setPasscode(e.target.value)}
-                  placeholder="Enter professor registration code" 
-                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-                />
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                  <input 
+                    type="email" 
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="cb.en.u4aie24247@cb.students.amrita.edu" 
+                    style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                  />
+                </div>
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                  <input 
+                    type="password"
+                    required 
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••" 
+                    style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                  />
+                </div>
+              </div>
+
+              {!isLogin && (
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                   <button 
+                      type="button"
+                      onClick={() => setRole('STUDENT')}
+                      style={{ flex: 1, padding: '0.875rem', borderRadius: '10px', background: role === 'STUDENT' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255,255,255,0.02)', border: `1px solid ${role === 'STUDENT' ? 'var(--primary)' : 'var(--card-border)'}`, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                   >
+                     <GraduationCap size={20} color={role === 'STUDENT' ? 'var(--primary)' : 'rgba(255,255,255,0.5)'} />
+                     <span style={{ fontSize: '0.875rem', fontWeight: role === 'STUDENT' ? 700 : 500 }}>Student</span>
+                   </button>
+                   <button 
+                      type="button"
+                      onClick={() => setRole('PROFESSOR')}
+                      style={{ flex: 1, padding: '0.875rem', borderRadius: '10px', background: role === 'PROFESSOR' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255,255,255,0.02)', border: `1px solid ${role === 'PROFESSOR' ? '#34d399' : 'var(--card-border)'}`, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                   >
+                     <ShieldCheck size={20} color={role === 'PROFESSOR' ? '#34d399' : 'rgba(255,255,255,0.5)'} />
+                     <span style={{ fontSize: '0.875rem', fontWeight: role === 'PROFESSOR' ? 700 : 500 }}>Professor</span>
+                   </button>
+                </div>
+              )}
+
+              {!isLogin && role === 'PROFESSOR' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Professor Verification Passcode</label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                    <input 
+                      type="password" 
+                      required
+                      value={passcode}
+                      onChange={e => setPasscode(e.target.value)}
+                      placeholder="Enter professor registration code" 
+                      style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                className="btn btn-primary pulse-glow" 
+                style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '1rem', opacity: loading ? 0.7 : 1 }}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : isLogin ? 'Secure Sign In' : 'Create Account'}
+              </button>
+            </form>
+
+            <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+              <span style={{ padding: '0 1rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>OR</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
             </div>
-          )}
 
-          <button 
-            type="submit" 
-            className="btn btn-primary pulse-glow" 
-            style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '1rem', opacity: loading ? 0.7 : 1 }}
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : isLogin ? 'Secure Sign In' : 'Create Account'}
-          </button>
-        </form>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+              <button 
+                onClick={handleMicrosoftAuth}
+                style={{ 
+                  width: '100%', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.06)', color: '#fff', 
+                  borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+                  transition: 'all 0.2s', border: '1px solid rgba(255,255,255,0.12)'
+                }}
+                onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.12)'}
+                onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
+                disabled={loading}
+              >
+                <MicrosoftIcon />
+                Sign in with Amrita Email (Microsoft M365)
+              </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0' }}>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-          <span style={{ padding: '0 1rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>OR</span>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-        </div>
+              <button 
+                onClick={handleGoogleAuth}
+                style={{ 
+                  width: '100%', padding: '0.875rem 1rem', background: '#fff', color: '#000', 
+                  borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+                  transition: 'transform 0.2s', border: 'none'
+                }}
+                onMouseOver={e=>e.currentTarget.style.transform='scale(1.01)'}
+                onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}
+                disabled={loading}
+              >
+                <GoogleIcon />
+                Continue with Google
+              </button>
+            </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-          <button 
-            onClick={handleMicrosoftAuth}
-            style={{ 
-              width: '100%', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.06)', color: '#fff', 
-              borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-              transition: 'all 0.2s', border: '1px solid rgba(255,255,255,0.12)'
-            }}
-            onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.12)'}
-            onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
-            disabled={loading}
-          >
-            <MicrosoftIcon />
-            Sign in with Amrita Email (Microsoft M365)
-          </button>
-
-          <button 
-            onClick={handleGoogleAuth}
-            style={{ 
-              width: '100%', padding: '0.875rem 1rem', background: '#fff', color: '#000', 
-              borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-              transition: 'transform 0.2s', border: 'none'
-            }}
-            onMouseOver={e=>e.currentTarget.style.transform='scale(1.01)'}
-            onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}
-            disabled={loading}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>
-             AmSlot v2.0.0 • Amrita Verified SSO
-          </div>
-          <button 
-            onClick={() => { setIsLogin(!isLogin); setError(null); }}
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline' }}
-          >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
-          </button>
-        </div>
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>
+                 AmSlot v2.0.0 • Amrita Verified SSO
+              </div>
+              <button 
+                onClick={() => { setIsLogin(!isLogin); setError(null); }}
+                style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline' }}
+              >
+                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
