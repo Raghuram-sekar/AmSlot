@@ -127,6 +127,32 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
         if (!authData.user) throw new Error("Verification trigger failed. Please check credentials.");
 
+        // If Supabase auto-creates session (email confirmation off or instant login)
+        if (authData.session) {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([
+              {
+                id: authData.user.id,
+                email: cleanEmail,
+                full_name: fullName,
+                role,
+                roll_number: autoRoll || null
+              }
+            ]);
+
+          if (insertError && !insertError.message.includes('duplicate')) {
+            throw insertError;
+          }
+
+          if (role === 'PROFESSOR') {
+            router.push('/professor');
+          } else {
+            router.push('/student');
+          }
+          return;
+        }
+
         setPendingUser({
           id: authData.user.id,
           email: cleanEmail,
@@ -140,6 +166,24 @@ export default function AuthPage() {
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!pendingUser?.email) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingUser.email
+      });
+      if (resendError) throw resendError;
+      alert(`Verification code resent to ${pendingUser.email}. Please check your inbox and spam folder.`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend verification code. Please check Supabase Auth SMTP settings.');
     } finally {
       setLoading(false);
     }
@@ -254,7 +298,16 @@ export default function AuthPage() {
         {otpStep ? (
           <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem', fontWeight: 600 }}>6-Digit OTP Code</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>6-Digit OTP Code</label>
+                <button 
+                  type="button"
+                  onClick={handleResendOtp}
+                  style={{ background: 'transparent', border: 'none', color: '#34d399', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'underline' }}
+                >
+                  Resend Code
+                </button>
+              </div>
               <input 
                 type="text" 
                 maxLength={6}
@@ -264,6 +317,9 @@ export default function AuthPage() {
                 placeholder="123456" 
                 style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--primary)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '1.5rem', letterSpacing: '0.4em', textAlign: 'center', fontFamily: 'monospace' }} 
               />
+              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem', textAlign: 'center' }}>
+                Check your Amrita inbox or spam folder. If email confirmation is disabled in Supabase, click Back to Sign In.
+              </p>
             </div>
 
             <button 
@@ -278,7 +334,7 @@ export default function AuthPage() {
             <button 
               type="button"
               onClick={() => { setOtpStep(false); setError(null); }}
-              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline', marginTop: '0.5rem' }}
+              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline', marginTop: '0.5rem', width: '100%', textAlign: 'center' }}
             >
               ← Back to Registration
             </button>
