@@ -14,6 +14,27 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const MicrosoftIcon = () => (
+  <svg viewBox="0 0 23 23" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#f35325" d="M1 1h10v10H1z"/>
+    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+    <path fill="#808080" d="M12 12h10v10H12z"/>
+  </svg>
+);
+
+export function isAmritaEmail(email: string): boolean {
+  if (!email) return false;
+  const lower = email.trim().toLowerCase();
+  return (
+    lower.endsWith('@cb.students.amrita.edu') ||
+    lower.endsWith('@am.students.amrita.edu') ||
+    lower.endsWith('@students.amrita.edu') ||
+    lower.endsWith('@amrita.edu') ||
+    lower.endsWith('@cb.amrita.edu')
+  );
+}
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -53,12 +74,27 @@ export default function AuthPage() {
           router.push('/student');
         }
       } else {
-        // Sign Up
+        // Sign Up - Enforce Amrita Email Domain
+        if (!isAmritaEmail(email)) {
+          throw new Error("Registration restricted: Only official Amrita University email IDs (@cb.students.amrita.edu, @amrita.edu) are allowed.");
+        }
+
+        // Check duplicate email in public.users
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email.trim().toLowerCase())
+          .maybeSingle();
+
+        if (existingUser) {
+          throw new Error("This Amrita email address is already registered. Please sign in instead.");
+        }
+
         if (role === 'PROFESSOR' && passcode !== 'AS@prof') {
           throw new Error("Invalid Professor Verification Passcode. Please contact the administrator.");
         }
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         });
 
@@ -69,7 +105,7 @@ export default function AuthPage() {
         const { error: insertError } = await supabase
           .from('users')
           .insert([
-            { id: authData.user.id, email, full_name: fullName, role }
+            { id: authData.user.id, email: email.trim().toLowerCase(), full_name: fullName, role }
           ]);
 
         if (insertError) throw insertError;
@@ -84,6 +120,24 @@ export default function AuthPage() {
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication.');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMicrosoftAuth = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'email profile openid',
+          redirectTo: `${window.location.origin}/onboarding`
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during Microsoft authentication.');
       setLoading(false);
     }
   };
@@ -230,23 +284,44 @@ export default function AuthPage() {
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
         </div>
 
-        <button 
-          onClick={handleGoogleAuth}
-          style={{ 
-            width: '100%', padding: '1rem', background: '#fff', color: '#000', 
-            borderRadius: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            gap: '0.75rem', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
-            transition: 'transform 0.2s', border: 'none'
-          }}
-          onMouseOver={e=>e.currentTarget.style.transform='scale(1.02)'}
-          onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}
-          disabled={loading}
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+          <button 
+            onClick={handleMicrosoftAuth}
+            style={{ 
+              width: '100%', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.06)', color: '#fff', 
+              borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.2s', border: '1px solid rgba(255,255,255,0.12)'
+            }}
+            onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.12)'}
+            onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
+            disabled={loading}
+          >
+            <MicrosoftIcon />
+            Sign in with Amrita Email (Microsoft M365)
+          </button>
+
+          <button 
+            onClick={handleGoogleAuth}
+            style={{ 
+              width: '100%', padding: '0.875rem 1rem', background: '#fff', color: '#000', 
+              borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+              transition: 'transform 0.2s', border: 'none'
+            }}
+            onMouseOver={e=>e.currentTarget.style.transform='scale(1.01)'}
+            onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}
+            disabled={loading}
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
+        </div>
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>
+             AmSlot v2.0.0 • Amrita Verified SSO
+          </div>
           <button 
             onClick={() => { setIsLogin(!isLogin); setError(null); }}
             style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline' }}

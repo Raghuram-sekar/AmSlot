@@ -52,6 +52,18 @@ export default function OnboardingPage() {
     checkUser();
   }, [router]);
 
+  const isAmritaEmail = (email: string | undefined): boolean => {
+    if (!email) return false;
+    const lower = email.trim().toLowerCase();
+    return (
+      lower.endsWith('@cb.students.amrita.edu') ||
+      lower.endsWith('@am.students.amrita.edu') ||
+      lower.endsWith('@students.amrita.edu') ||
+      lower.endsWith('@amrita.edu') ||
+      lower.endsWith('@cb.amrita.edu')
+    );
+  };
+
   const handleCompleteProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -60,8 +72,36 @@ export default function OnboardingPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No active session.");
 
+      const email = session.user.email?.trim().toLowerCase();
+
+      // Enforce Amrita Email Domain
+      if (!isAmritaEmail(email)) {
+        throw new Error("Registration restricted: Only official Amrita University email IDs (@cb.students.amrita.edu, @amrita.edu) are permitted. Please sign in with your college account.");
+      }
+
+      // Duplicate check
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingUser && existingUser.id !== session.user.id) {
+        throw new Error("This Amrita email address is already registered to another account.");
+      }
+
       if (role === 'PROFESSOR' && passcode !== 'AS@prof') {
         throw new Error("Invalid Professor Verification Passcode. Please contact the administrator.");
+      }
+
+      // Try auto-extracting roll number from email prefix (e.g. cb.en.u4aie24247@cb.students.amrita.edu -> CB.SC.U4AIE24247)
+      let autoRoll = '';
+      if (email) {
+        const prefix = email.split('@')[0].toUpperCase();
+        const match = prefix.match(/U4[A-Z]{3,4}\d+/);
+        if (match) {
+          autoRoll = 'CB.SC.' + match[0];
+        }
       }
 
       const { error } = await supabase
@@ -69,9 +109,10 @@ export default function OnboardingPage() {
         .insert([
           { 
             id: session.user.id, 
-            email: session.user.email, 
+            email, 
             full_name: fullName, 
-            role 
+            role,
+            roll_number: autoRoll || null
           }
         ]);
 
