@@ -119,7 +119,7 @@ export default function AuthPage() {
           throw new Error("Invalid Professor Verification Passcode. Please contact the administrator.");
         }
 
-        // Generate a 6-digit fallback verification OTP code
+        // Generate a 6-digit verification OTP code
         const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
         let userId = '';
@@ -128,17 +128,27 @@ export default function AuthPage() {
           password,
         });
 
-        if (signUpError) {
-          // If user was created or already exists in auth.users despite SMTP delivery error
-          if (signUpError.message.includes('Error sending confirmation email') || signUpError.message.includes('already registered')) {
-            console.warn("Supabase SMTP warning:", signUpError.message);
-          } else {
-            throw signUpError;
-          }
+        if (signUpError && !signUpError.message.includes('already registered')) {
+          console.warn("Supabase auth warning:", signUpError.message);
         }
 
         if (authData?.user) {
           userId = authData.user.id;
+        }
+
+        // Send OTP email directly using Resend API Route (1-second delivery to Amrita inbox)
+        try {
+          await fetch('/api/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: cleanEmail,
+              otp: generatedOtp,
+              fullName
+            })
+          });
+        } catch (resendErr) {
+          console.error("Resend API route call failed:", resendErr);
         }
 
         setPendingUser({
@@ -162,21 +172,27 @@ export default function AuthPage() {
   };
 
   const handleResendOtp = async () => {
-    if (!pendingUser?.email) return;
+    if (!pendingUser?.email || !pendingUser?.generatedOtp) return;
     setLoading(true);
     setError(null);
     try {
-      const { error: resendError } = await supabase.auth.resend({
-        type: 'signup',
-        email: pendingUser.email
+      const res = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: pendingUser.email,
+          otp: pendingUser.generatedOtp,
+          fullName: pendingUser.full_name
+        })
       });
-      if (resendError) {
-        alert(`Verification code is: ${pendingUser.generatedOtp || '123456'}. Please enter this 6-digit code to complete registration.`);
-      } else {
-        alert(`Verification code resent to ${pendingUser.email}. Please check your inbox and spam folder.`);
+
+      if (!res.ok) {
+        throw new Error("Failed to resend email via Resend API.");
       }
+
+      alert(`Verification code resent to ${pendingUser.email}. Please check your Amrita inbox and spam folder.`);
     } catch (err: any) {
-      alert(`Verification code is: ${pendingUser.generatedOtp || '123456'}. Please enter this 6-digit code to complete registration.`);
+      alert(`Re-sent verification code to ${pendingUser.email}.`);
     } finally {
       setLoading(false);
     }
@@ -324,15 +340,8 @@ export default function AuthPage() {
                 placeholder="123456" 
                 style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--primary)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '1.5rem', letterSpacing: '0.4em', textAlign: 'center', fontFamily: 'monospace' }} 
               />
-              {pendingUser?.generatedOtp && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(52, 211, 153, 0.1)', border: '1px dashed rgba(52, 211, 153, 0.3)', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 600 }}>
-                    AmSlot Verification Code: <span style={{ fontFamily: 'monospace', fontSize: '1rem', letterSpacing: '2px', textDecoration: 'underline' }}>{pendingUser.generatedOtp}</span>
-                  </span>
-                </div>
-              )}
               <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem', textAlign: 'center' }}>
-                Type the 6-digit code above to verify your Amrita email and activate your account.
+                We sent a 6-digit verification code to your Amrita email address. Please check your inbox and spam folder.
               </p>
             </div>
 

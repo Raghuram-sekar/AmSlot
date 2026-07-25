@@ -1,0 +1,127 @@
+Skeleton Block: lines 910 to 916
+  910:                     {scheduleLoading ? (
+  911:                        <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+  912:                           <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+  913:                             <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
+  914:                           </div>
+  915:                           <TableSkeleton />
+  916:                        </div>
+
+Main Table Block: lines 985 to 1026
+  985:                                  {/* Slots Table Column */}
+  986:                                  <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', flex: 1, margin: 0 }}>
+  987:                                     <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.25rem 2rem', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--card-border)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+  988:                                       <span>Time Slot</span><span>Booked Group</span><span>Status</span><span style={{ textAlign: 'right' }}>Actions</span>
+  989:                                     </div>
+  990:                                     
+  991:                                     {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).length === 0 ? (
+  992:                                        <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+  993:                                           No slots scheduled for this date.
+  994:                                        </div>
+  995:                                     ) : (
+  996:                                        <div>
+  997:                                          {filteredScheduleSlots.filter(s => s.event_date === activeScheduleDate).map((slot) => {
+  998:                                             const start = slot.start_time.substring(0,5);
+  999:                                             const end = slot.end_time.substring(0,5);
+  1000:                                             const hasGroup = slot.groups !== null;
+  1001: 
+  1002:                                             return (
+  1003:                                               <div key={slot.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr 2fr 1.5fr', padding: '1.5rem 2rem', borderBottom: '1px solid var(--card-border)', alignItems: 'center' }}>
+  1004:                                                  <div>
+  1005:                                                     <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{start} - {end}</div>
+  1006:                                                     <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.15rem' }}>{slot.event_title}</div>
+  1007:                                                  </div>
+  1008:                                                  
+  1009:                                                  <div>
+  1010:                                                     {hasGroup ? (
+  1011:                                                        <div style={{ fontWeight: 700, color: '#fff' }}>{slot.groups.name}</div>
+  1012:                                                     ) : (
+  1013:                                                        <span style={{ padding: '0.4rem 0.75rem', background: 'rgba(52, 211, 153, 0.05)', color: '#34d399', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', border: '1px solid rgba(52, 211, 153, 0.15)' }}>AVAILABLE</span>
+  1014:                                                     )}
+  1015:                                                  </div>
+  1016:                                                  
+  1017:                                                  <div>
+  1018:                                                    {/* Status Badges */}
+  1019:                                                    {slot.status === 'AVAILABLE' && <span className="badge" style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Unbooked</span>}
+  1020:                                                    {slot.status === 'BOOKED' && <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', color: 'var(--primary)', margin: 0 }}>Scheduled</span>}
+  1021:                                                    {slot.status === 'PRESENTED' && <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', margin: 0 }}>Presented</span>}
+  1022:                                                  </div>
+  1023:                                                  
+  1024:                                                  <div style={{ textAlign: 'right' }}>
+  1025:                                                     <button onClick={() => openManageModal(slot)} className="btn btn-secondary" disabled={!hasGroup} style={{ opacity: hasGroup ? 1 : 0.4 }}>Manage</button>
+  1026:                                                  </div>
+
+Grade Registry Block: lines 1663 to 1735
+  1663:                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+  1664:                        {/* Table Header Row */}
+  1665:                        {scheduleSlots.filter(s => s.status === 'PRESENTED' || s.status === 'ABSENT').length > 0 && (
+  1666:                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 0.5fr', padding: '0 2rem 0.75rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
+  1667:                              <span>Group Code</span>
+  1668:                              <span>Time Log</span>
+  1669:                              <span>Result</span>
+  1670:                              <span>Score</span>
+  1671:                              <span style={{ textAlign: 'right' }}>Details</span>
+  1672:                           </div>
+  1673:                        )}
+  1674: 
+  1675:                        {scheduleSlots.filter(s => (s.status === 'PRESENTED' || s.status === 'ABSENT') && (s.groups?.name.toLowerCase().includes(searchTerm.toLowerCase()))).length === 0 ? (
+  1676:                           <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+  1677:                              <FileText size={48} style={{ margin: '0 auto 1.5rem', opacity: 0.2 }} />
+  1678:                              <h3 style={{ color: '#fff', fontSize: '1.25rem' }}>{searchTerm ? 'No matches found' : 'No Records Yet'}</h3>
+  1679:                              <p style={{ color: 'rgba(255,255,255,0.5)' }}>{searchTerm ? `No results for "${searchTerm}"` : 'Grade sessions from the Master Schedule. Sealed records will appear here.'}</p>
+  1680:                           </div>
+  1681:                        ) : (
+  1682:                           scheduleSlots.filter(s => (s.status === 'PRESENTED' || s.status === 'ABSENT') && (s.groups?.name.toLowerCase().includes(searchTerm.toLowerCase()))).map(slot => {
+  1683:                              const isExpanded = expandedRecordId === slot.id;
+  1684:                              
+  1685:                              return (
+  1686:                                 <div key={slot.id} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${isExpanded ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s' }}>
+  1687:                                    
+  1688:                                    {/* Collapsed Header Row */}
+  1689:                                    <div 
+  1690:                                       onClick={() => setExpandedRecordId(isExpanded ? null : slot.id)}
+  1691:                                       style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 0.5fr', alignItems: 'center', padding: '1.25rem 2rem', cursor: 'pointer', background: isExpanded ? 'rgba(139, 92, 246, 0.05)' : 'transparent' }}
+  1692:                                    >
+  1693:                                       <div>
+  1694:                                          <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>{slot.groups?.name || 'Unknown Group'}</div>
+  1695:                                       </div>
+  1696:                                       <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', fontWeight: 600 }}>
+  1697:                                          {slot.event_date} • {slot.start_time.substring(0,5)}
+  1698:                                       </div>
+  1699:                                       <div>
+  1700:                                          {slot.status === 'PRESENTED' ? (
+  1701:                                             <span className="badge" style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', border: 'none' }}><CheckCircle2 size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Present</span>
+  1702:                                          ) : (
+  1703:                                             <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: 'none' }}><XOctagon size={12} style={{marginRight: '4px', verticalAlign: 'middle', marginBottom: '2px'}}/> Absent</span>
+  1704:                                          )}
+  1705:                                       </div>
+  1706:                                       <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.1rem' }}>
+  1707:                                          {slot.grade || <span style={{ color: 'rgba(255,255,255,0.2)' }}>--/--</span>}
+  1708:                                       </div>
+  1709:                                       <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.4)' }}>
+  1710:                                          {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+  1711:                                       </div>
+  1712:                                    </div>
+  1713: 
+  1714:                                    {/* Expanded Details Panel */}
+  1715:                                    {isExpanded && (
+  1716:                                       <div className="animate-fade-in-down" style={{ padding: '0 2rem 2rem 2rem', borderTop: isExpanded ? '1px solid rgba(139, 92, 246, 0.2)' : 'none', marginTop: '0.5rem', paddingTop: '1.5rem', display: 'flex', gap: '2rem' }}>
+  1717:                                          <div style={{ flex: 1 }}>
+  1718:                                             <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', fontWeight: 800 }}>Professor Insights</div>
+  1719:                                             <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', color: '#fff', fontSize: '1rem', lineHeight: '1.6', border: '1px solid rgba(255,255,255,0.03)' }}>
+  1720:                                                {slot.private_notes || <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No notes provided for this session.</span>}
+  1721:                                             </div>
+  1722:                                          </div>
+  1723:                                          
+  1724:                                          <div style={{ width: '220px', background: 'linear-gradient(145deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0) 100%)', borderRadius: '12px', padding: '1.5rem', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+  1725:                                             <div style={{ fontSize: '0.75rem', color: 'rgba(139, 92, 246, 0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: '0.5rem' }}>Final Extracted Score</div>
+  1726:                                             <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{slot.grade || '--'}</div>
+  1727:                                          </div>
+  1728:                                       </div>
+  1729:                                    )}
+  1730:                                 </div>
+  1731:                              )
+  1732:                           })
+  1733:                        )}
+  1734:                     </div>
+  1735:                  </div>
