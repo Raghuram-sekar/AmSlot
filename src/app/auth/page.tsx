@@ -127,32 +127,6 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
         if (!authData.user) throw new Error("Verification trigger failed. Please check credentials.");
 
-        // If Supabase auto-creates session (email confirmation off or instant login)
-        if (authData.session) {
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert([
-              {
-                id: authData.user.id,
-                email: cleanEmail,
-                full_name: fullName,
-                role,
-                roll_number: autoRoll || null
-              }
-            ]);
-
-          if (insertError && !insertError.message.includes('duplicate')) {
-            throw insertError;
-          }
-
-          if (role === 'PROFESSOR') {
-            router.push('/professor');
-          } else {
-            router.push('/student');
-          }
-          return;
-        }
-
         setPendingUser({
           id: authData.user.id,
           email: cleanEmail,
@@ -161,7 +135,7 @@ export default function AuthPage() {
           roll_number: autoRoll || null
         });
 
-        // Open OTP verification step
+        // Always mandate 6-digit OTP verification
         setOtpStep(true);
       }
     } catch (err: any) {
