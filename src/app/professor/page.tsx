@@ -865,7 +865,7 @@ const CourseSkeleton = () => (
                 <Users size={20} /> Group Manager
               </button>
               <button onClick={() => { setActiveTab('directory'); if (activeCourseId) loadStudentDirectory(activeCourseId); }} className={`tab-btn ${activeTab === 'directory' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'directory' ? 'var(--primary)' : 'transparent', color: activeTab === 'directory' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left' }}>
-                <BookOpen size={20} /> Student Directory
+                <BookOpen size={20} /> Student List
               </button>
               <button onClick={() => setActiveTab('gradebook')} className={`tab-btn ${activeTab === 'gradebook' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'gradebook' ? 'var(--primary)' : 'transparent', color: activeTab === 'gradebook' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left', marginTop: '1rem' }}>
                 <FileText size={20} /> Grade Registry
@@ -1913,10 +1913,10 @@ const CourseSkeleton = () => (
                      <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                         <div>
                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', marginBottom: '0.75rem' }}>
-                              <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Enrolled Roster</span>
+                              <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Registered Students</span>
                            </div>
-                           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}>Student Directory</h1>
-                           <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.4rem', fontSize: '1rem' }}>Comprehensive class roster with section parsing, roll numbers, and squad assignments.</p>
+                           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}>Student List</h1>
+                           <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.4rem', fontSize: '1rem' }}>Comprehensive list of registered students with section details, roll numbers, and team assignments.</p>
                         </div>
 
                         <button onClick={downloadStudentDirectoryCSV}
@@ -1924,7 +1924,7 @@ const CourseSkeleton = () => (
                            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                         >
-                           <Download size={18} /> Export Roster (CSV)
+                           <Download size={18} /> Download Student List (CSV)
                         </button>
                      </header>
 
