@@ -110,6 +110,8 @@ export default function ProfessorDashboard() {
   const [directoryStudents, setDirectoryStudents] = useState<any[]>([]);
   const [directoryLoading, setDirectoryLoading] = useState(false);
   const [directorySearch, setDirectorySearch] = useState('');
+  const [directoryFilter, setDirectoryFilter] = useState('ALL');
+  const [directorySort, setDirectorySort] = useState('NAME');
 
   // Custom Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
@@ -1935,7 +1937,7 @@ const CourseSkeleton = () => (
                            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)' }}>{directoryStudents.length}</div>
                         </div>
                         <div style={{ padding: '1.5rem', background: 'rgba(52,211,153,0.03)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '20px' }}>
-                           <div style={{ fontSize: '0.65rem', color: '#34d399', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.3rem' }}>Squad Assigned</div>
+                           <div style={{ fontSize: '0.65rem', color: '#34d399', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.3rem' }}>Team Assigned</div>
                            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#34d399', fontFamily: 'var(--font-outfit)' }}>{directoryStudents.filter(s => s.teamName).length}</div>
                         </div>
                         <div style={{ padding: '1.5rem', background: 'rgba(244,63,94,0.03)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: '20px' }}>
@@ -1944,12 +1946,37 @@ const CourseSkeleton = () => (
                         </div>
                      </div>
 
-                     {/* Search Input Bar */}
-                     <div style={{ marginBottom: '1.5rem', position: 'relative', maxWidth: '400px' }}>
-                        <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                        <input type="text" placeholder="Search by name, roll number, team, or email..." value={directorySearch} onChange={e => setDirectorySearch(e.target.value)}
-                           style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
-                        />
+                     {/* Search, Filter & Sort Controls */}
+                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ position: 'relative', flex: 1, minWidth: '280px', maxWidth: '400px' }}>
+                           <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                           <input type="text" placeholder="Search name, roll number, team, or email..." value={directorySearch} onChange={e => setDirectorySearch(e.target.value)}
+                              style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
+                           />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                           <select value={directoryFilter} onChange={e => setDirectoryFilter(e.target.value)}
+                              style={{ padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+                           >
+                              <option value="ALL">All Students</option>
+                              <option value="SEC_A">Section A</option>
+                              <option value="SEC_B">Section B</option>
+                              <option value="SEC_C">Section C</option>
+                              <option value="SEC_D">Section D</option>
+                              <option value="ASSIGNED">Team Assigned</option>
+                              <option value="UNASSIGNED">Unassigned</option>
+                           </select>
+
+                           <select value={directorySort} onChange={e => setDirectorySort(e.target.value)}
+                              style={{ padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+                           >
+                              <option value="NAME">Sort by Name (A-Z)</option>
+                              <option value="ROLL">Sort by Roll Number</option>
+                              <option value="SECTION">Sort by Section</option>
+                              <option value="TEAM">Sort by Team Name</option>
+                           </select>
+                        </div>
                      </div>
 
                      {/* Roster Table */}
@@ -1959,17 +1986,34 @@ const CourseSkeleton = () => (
                         ) : directoryStudents.length === 0 ? (
                            <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>No students enrolled in this workspace yet.</div>
                         ) : (() => {
-                           const filtered = directoryStudents.filter(s => {
-                              const term = directorySearch.toLowerCase().trim();
-                              if (!term) return true;
-                              return (
-                                 s.full_name?.toLowerCase().includes(term) ||
-                                 s.email?.toLowerCase().includes(term) ||
-                                 s.roll_number?.toLowerCase().includes(term) ||
-                                 s.teamName?.toLowerCase().includes(term) ||
-                                 s.parsedRoll.section?.toLowerCase().includes(term)
-                              );
-                           });
+                           const filtered = directoryStudents
+                              .filter(s => {
+                                 const term = directorySearch.toLowerCase().trim();
+                                 const matchesSearch = !term || (
+                                    s.full_name?.toLowerCase().includes(term) ||
+                                    s.email?.toLowerCase().includes(term) ||
+                                    s.roll_number?.toLowerCase().includes(term) ||
+                                    s.teamName?.toLowerCase().includes(term) ||
+                                    s.parsedRoll.section?.toLowerCase().includes(term)
+                                 );
+
+                                 if (!matchesSearch) return false;
+
+                                 if (directoryFilter === 'ASSIGNED') return !!s.teamName;
+                                 if (directoryFilter === 'UNASSIGNED') return !s.teamName;
+                                 if (directoryFilter.startsWith('SEC_')) {
+                                    const secLetter = directoryFilter.split('_')[1];
+                                    return s.parsedRoll.section === `Section ${secLetter}`;
+                                 }
+                                 return true;
+                              })
+                              .sort((a, b) => {
+                                 if (directorySort === 'NAME') return (a.full_name || '').localeCompare(b.full_name || '');
+                                 if (directorySort === 'ROLL') return (a.roll_number || '').localeCompare(b.roll_number || '');
+                                 if (directorySort === 'SECTION') return (a.parsedRoll.section || '').localeCompare(b.parsedRoll.section || '');
+                                 if (directorySort === 'TEAM') return (a.teamName || 'ZZZ').localeCompare(b.teamName || 'ZZZ');
+                                 return 0;
+                              });
                            return (
                               <div style={{ overflowX: 'auto' }}>
                                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
@@ -1978,7 +2022,7 @@ const CourseSkeleton = () => (
                                           <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Student Name</th>
                                           <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Section</th>
                                           <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Roll Number</th>
-                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assigned Squad</th>
+                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assigned Team</th>
                                           <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Email Address</th>
                                        </tr>
                                     </thead>
