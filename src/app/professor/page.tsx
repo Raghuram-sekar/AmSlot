@@ -7,6 +7,44 @@ import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings,
 import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 
+// ─── Roll Number Parser ───────────────────────────────────────────────────────
+export function parseAmritaRollNumber(input: string | null | undefined) {
+   if (!input) return { cleanRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
+   
+   let clean = input.toUpperCase().trim();
+   if (clean.includes('@')) clean = clean.split('@')[0];
+   if (clean.startsWith('CB.SC.')) clean = clean.replace('CB.SC.', '');
+   if (clean.startsWith('CBSC')) clean = clean.replace('CBSC', '');
+
+   const match = clean.match(/^U4([A-Z]{3,4})(\d{2})(\d)(\d{2,3})$/);
+   if (match) {
+      const dept = match[1];
+      const year = '20' + match[2];
+      const secCode = match[3];
+      const index = match[4];
+      const secMap: Record<string, string> = { '0': 'A', '1': 'B', '2': 'C', '3': 'D' };
+      const sectionName = secMap[secCode] ? `Section ${secMap[secCode]}` : `Sec ${secCode}`;
+      
+      return {
+         cleanRoll: clean,
+         dept,
+         year,
+         section: sectionName,
+         shortRoll: `${secCode}${index}`,
+         isValid: true
+      };
+   }
+
+   return {
+      cleanRoll: clean,
+      dept: '',
+      year: '',
+      section: 'General',
+      shortRoll: clean,
+      isValid: false
+   };
+}
+
 export default function ProfessorDashboard() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -67,6 +105,11 @@ export default function ProfessorDashboard() {
   const [courseGroups, setCourseGroups] = useState<any[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Student Directory State
+  const [directoryStudents, setDirectoryStudents] = useState<any[]>([]);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
+  const [directorySearch, setDirectorySearch] = useState('');
 
   // Custom Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
@@ -139,7 +182,8 @@ export default function ProfessorDashboard() {
       loadProjects(courseId),
       loadMasterSchedule(courseId),
       loadWaitlist(courseId),
-      loadGroups(courseId)
+      loadGroups(courseId),
+      loadStudentDirectory(courseId)
     ]);
   };
 
@@ -352,6 +396,80 @@ export default function ProfessorDashboard() {
         setConfirmModal(null);
       }
     });
+  };
+
+  const loadStudentDirectory = async (forceId?: string) => {
+    const cid = forceId || activeCourseId;
+    if (!cid) return;
+    setDirectoryLoading(true);
+    const { data: enrollData } = await supabase
+       .from('course_enrollments')
+       .select('joined_at, student_id, users(id, full_name, email, roll_number)')
+       .eq('course_id', cid);
+
+    if (!enrollData) {
+       setDirectoryStudents([]);
+       setDirectoryLoading(false);
+       return;
+    }
+
+    const { data: groupsData } = await supabase
+       .from('groups')
+       .select('id, name, group_members(student_id)')
+       .eq('course_id', cid);
+
+    const groupMap = new Map<string, string>();
+    if (groupsData) {
+       groupsData.forEach((g: any) => {
+          g.group_members?.forEach((m: any) => {
+             groupMap.set(m.student_id, g.name);
+          });
+       });
+    }
+
+    const list = enrollData.map((item: any) => {
+       const u = item.users;
+       const parsed = parseAmritaRollNumber(u?.roll_number);
+       return {
+          id: u?.id || item.student_id,
+          full_name: u?.full_name || 'Unknown Student',
+          email: u?.email || 'N/A',
+          roll_number: u?.roll_number || 'N/A',
+          parsedRoll: parsed,
+          teamName: groupMap.get(item.student_id) || null,
+          joined_at: item.joined_at
+       };
+    });
+
+    setDirectoryStudents(list);
+    setDirectoryLoading(false);
+  };
+
+  const downloadStudentDirectoryCSV = () => {
+     if (!directoryStudents.length) {
+        showToast("No student records to export", "error");
+        return;
+     }
+     const headers = ["Student Name", "Section", "Roll Number", "Assigned Team", "Email Address", "Joined Date"];
+     const rows = directoryStudents.map(s => [
+        `"${(s.full_name || '').replace(/"/g, '""')}"`,
+        `"${s.parsedRoll.section}"`,
+        `"${s.roll_number || 'N/A'}"`,
+        `"${s.teamName || 'No Team'}"`,
+        `"${s.email}"`,
+        `"${new Date(s.joined_at).toLocaleString()}"`
+     ]);
+     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+     const url = URL.createObjectURL(blob);
+     const link = document.createElement("a");
+     link.setAttribute("href", url);
+     link.setAttribute("download", `Student_Directory_${activeCourse?.name || 'Course'}.csv`);
+     link.style.visibility = 'hidden';
+     document.body.appendChild(link);
+     link.click();
+     document.body.removeChild(link);
+     showToast("Student directory exported to CSV", "success");
   };
 
   const handleDeleteProject = async (projectId: string) => {
@@ -745,6 +863,9 @@ const CourseSkeleton = () => (
               </button>
               <button onClick={() => setActiveTab('groups')} className={`tab-btn ${activeTab === 'groups' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'groups' ? 'var(--primary)' : 'transparent', color: activeTab === 'groups' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left' }}>
                 <Users size={20} /> Group Manager
+              </button>
+              <button onClick={() => { setActiveTab('directory'); if (activeCourseId) loadStudentDirectory(activeCourseId); }} className={`tab-btn ${activeTab === 'directory' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'directory' ? 'var(--primary)' : 'transparent', color: activeTab === 'directory' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left' }}>
+                <BookOpen size={20} /> Student Directory
               </button>
               <button onClick={() => setActiveTab('gradebook')} className={`tab-btn ${activeTab === 'gradebook' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', borderRadius: '12px', cursor: 'pointer', background: activeTab === 'gradebook' ? 'var(--primary)' : 'transparent', color: activeTab === 'gradebook' ? '#fff' : 'rgba(255,255,255,0.6)', border: 'none', fontWeight: 600, fontSize: '1rem', transition: 'all 0.2s', textAlign: 'left', marginTop: '1rem' }}>
                 <FileText size={20} /> Grade Registry
@@ -1783,7 +1904,126 @@ const CourseSkeleton = () => (
                            </div>
                         )}
                      </div>
-                 </div>
+                  </div>
+               )}
+
+               {/* STUDENT DIRECTORY MODULE */}
+               {activeTab === 'directory' && (
+                  <div className="animate-fade-in-up">
+                     <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', marginBottom: '0.75rem' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Enrolled Roster</span>
+                           </div>
+                           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}>Student Directory</h1>
+                           <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.4rem', fontSize: '1rem' }}>Comprehensive class roster with section parsing, roll numbers, and squad assignments.</p>
+                        </div>
+
+                        <button onClick={downloadStudentDirectoryCSV}
+                           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.875rem 1.5rem', background: 'linear-gradient(135deg, #34d399, #059669)', color: '#000', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(52,211,153,0.25)', transition: 'all 0.2s' }}
+                           onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                           onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                           <Download size={18} /> Export Roster (CSV)
+                        </button>
+                     </header>
+
+                     {/* Summary Cards */}
+                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px' }}>
+                           <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.3rem' }}>Total Enrolled</div>
+                           <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)' }}>{directoryStudents.length}</div>
+                        </div>
+                        <div style={{ padding: '1.5rem', background: 'rgba(52,211,153,0.03)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '20px' }}>
+                           <div style={{ fontSize: '0.65rem', color: '#34d399', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.3rem' }}>Squad Assigned</div>
+                           <div style={{ fontSize: '2rem', fontWeight: 900, color: '#34d399', fontFamily: 'var(--font-outfit)' }}>{directoryStudents.filter(s => s.teamName).length}</div>
+                        </div>
+                        <div style={{ padding: '1.5rem', background: 'rgba(244,63,94,0.03)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: '20px' }}>
+                           <div style={{ fontSize: '0.65rem', color: '#f43f5e', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.3rem' }}>Unassigned</div>
+                           <div style={{ fontSize: '2rem', fontWeight: 900, color: '#f43f5e', fontFamily: 'var(--font-outfit)' }}>{directoryStudents.filter(s => !s.teamName).length}</div>
+                        </div>
+                     </div>
+
+                     {/* Search Input Bar */}
+                     <div style={{ marginBottom: '1.5rem', position: 'relative', maxWidth: '400px' }}>
+                        <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                        <input type="text" placeholder="Search by name, roll number, team, or email..." value={directorySearch} onChange={e => setDirectorySearch(e.target.value)}
+                           style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
+                        />
+                     </div>
+
+                     {/* Roster Table */}
+                     <div style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '24px', overflow: 'hidden' }}>
+                        {directoryLoading ? (
+                           <TableSkeleton />
+                        ) : directoryStudents.length === 0 ? (
+                           <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>No students enrolled in this workspace yet.</div>
+                        ) : (() => {
+                           const filtered = directoryStudents.filter(s => {
+                              const term = directorySearch.toLowerCase().trim();
+                              if (!term) return true;
+                              return (
+                                 s.full_name?.toLowerCase().includes(term) ||
+                                 s.email?.toLowerCase().includes(term) ||
+                                 s.roll_number?.toLowerCase().includes(term) ||
+                                 s.teamName?.toLowerCase().includes(term) ||
+                                 s.parsedRoll.section?.toLowerCase().includes(term)
+                              );
+                           });
+                           return (
+                              <div style={{ overflowX: 'auto' }}>
+                                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                                    <thead>
+                                       <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Student Name</th>
+                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Section</th>
+                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Roll Number</th>
+                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assigned Squad</th>
+                                          <th style={{ padding: '1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Email Address</th>
+                                       </tr>
+                                    </thead>
+                                    <tbody>
+                                       {filtered.map(st => (
+                                          <tr key={st.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                             <td style={{ padding: '1.1rem 1.5rem', fontWeight: 800, color: '#fff' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800, color: '#c4b5fd', flexShrink: 0 }}>
+                                                      {st.full_name?.substring(0, 2).toUpperCase() || 'ST'}
+                                                   </div>
+                                                   <span>{st.full_name}</span>
+                                                </div>
+                                             </td>
+                                             <td style={{ padding: '1.1rem 1.5rem', color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
+                                                <span style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                                                   {st.parsedRoll.section}
+                                                </span>
+                                             </td>
+                                             <td style={{ padding: '1.1rem 1.5rem', color: '#34d399', fontWeight: 800, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                                                {st.roll_number || 'N/A'}
+                                             </td>
+                                             <td style={{ padding: '1.1rem 1.5rem' }}>
+                                                {st.teamName ? (
+                                                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#34d399', fontSize: '0.75rem', fontWeight: 800 }}>
+                                                      {st.teamName}
+                                                   </div>
+                                                ) : (
+                                                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#f43f5e', fontSize: '0.75rem', fontWeight: 800 }}>
+                                                      No Team
+                                                   </div>
+                                                )}
+                                             </td>
+                                             <td style={{ padding: '1.1rem 1.5rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                                                {st.email}
+                                             </td>
+                                          </tr>
+                                       ))}
+                                    </tbody>
+                                 </table>
+                              </div>
+                           );
+                        })()}
+                     </div>
+                  </div>
                )}
                {activeTab === 'settings' && (
                   <div className="animate-fade-in-up">

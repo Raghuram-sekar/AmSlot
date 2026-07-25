@@ -20,6 +20,44 @@ interface ConfirmModalState {
    onConfirm: () => void;
 }
 
+// ─── Roll Number Parser ───────────────────────────────────────────────────────
+export function parseAmritaRollNumber(input: string | null | undefined) {
+   if (!input) return { cleanRoll: '', dept: '', year: '', section: 'General', shortRoll: '', isValid: false };
+   
+   let clean = input.toUpperCase().trim();
+   if (clean.includes('@')) clean = clean.split('@')[0];
+   if (clean.startsWith('CB.SC.')) clean = clean.replace('CB.SC.', '');
+   if (clean.startsWith('CBSC')) clean = clean.replace('CBSC', '');
+
+   const match = clean.match(/^U4([A-Z]{3,4})(\d{2})(\d)(\d{2,3})$/);
+   if (match) {
+      const dept = match[1];
+      const year = '20' + match[2];
+      const secCode = match[3];
+      const index = match[4];
+      const secMap: Record<string, string> = { '0': 'A', '1': 'B', '2': 'C', '3': 'D' };
+      const sectionName = secMap[secCode] ? `Section ${secMap[secCode]}` : `Sec ${secCode}`;
+      
+      return {
+         cleanRoll: clean,
+         dept,
+         year,
+         section: sectionName,
+         shortRoll: `${secCode}${index}`,
+         isValid: true
+      };
+   }
+
+   return {
+      cleanRoll: clean,
+      dept: '',
+      year: '',
+      section: 'General',
+      shortRoll: clean,
+      isValid: false
+   };
+}
+
 export default function StudentPortal() {
    const router = useRouter();
    const { showToast } = useToast();
@@ -56,6 +94,12 @@ export default function StudentPortal() {
    // Group Rename
    const [isRenamingGroup, setIsRenamingGroup] = useState(false);
    const [tempGroupName, setTempGroupName] = useState('');
+
+   // Profile Editing & Roll Number Modal
+   const [editProfileOpen, setEditProfileOpen] = useState(false);
+   const [editNameInput, setEditNameInput] = useState('');
+   const [editRollInput, setEditRollInput] = useState('');
+   const [editProfileSaving, setEditProfileSaving] = useState(false);
 
    // Booking UI
    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -200,6 +244,29 @@ export default function StudentPortal() {
        setIsRenamingGroup(false);
     };
 
+    const handleSaveProfile = async () => {
+       if (!user || !editNameInput.trim()) return;
+       setEditProfileSaving(true);
+       
+       const cleanRoll = editRollInput.trim().toUpperCase();
+       const { error } = await supabase
+          .from('users')
+          .update({
+             full_name: editNameInput.trim(),
+             roll_number: cleanRoll
+          })
+          .eq('id', user.id);
+
+       if (!error) {
+          setProfile((prev: any) => ({ ...prev, full_name: editNameInput.trim(), roll_number: cleanRoll }));
+          showToast("Profile updated successfully!", "success");
+          setEditProfileOpen(false);
+       } else {
+          showToast("Error updating profile: " + error.message, "error");
+       }
+       setEditProfileSaving(false);
+    };
+
    const handleCancelBooking = async () => {
       const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
       if (!myCurrentBooking) return;
@@ -320,6 +387,11 @@ export default function StudentPortal() {
       
       if (userData?.role !== 'STUDENT') { router.push('/professor'); return; }
       setProfile(userData);
+      setEditNameInput(userData.full_name || '');
+      setEditRollInput(userData.roll_number || '');
+      if (!userData.roll_number) {
+         setEditProfileOpen(true);
+      }
       await fetchEnrolledCourses(session.user.id);
       setLoading(false);
    };
@@ -611,9 +683,28 @@ export default function StudentPortal() {
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.2rem' }}>Student Profile</div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '-0.01em', lineHeight: 1.2, wordBreak: 'break-word' }}>
-                      {profile?.full_name || 'Student'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '-0.01em', lineHeight: 1.2, wordBreak: 'break-word' }}>
+                        {profile?.full_name || 'Student'}
+                      </div>
+                      <button onClick={() => { setEditNameInput(profile?.full_name || ''); setEditRollInput(profile?.roll_number || ''); setEditProfileOpen(true); }}
+                         style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', padding: '0.1rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                         onMouseOver={e => e.currentTarget.style.color = '#34d399'}
+                         onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+                         title="Edit Profile & Roll Number"
+                      >
+                         <Pencil size={12} />
+                      </button>
                     </div>
+                    {profile?.roll_number ? (
+                      <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, marginTop: '0.15rem', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                         #{profile.roll_number}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.65rem', color: '#f43f5e', fontWeight: 700, marginTop: '0.15rem' }}>
+                         ⚠️ Missing Roll Number
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1303,31 +1394,61 @@ export default function StudentPortal() {
          </main>
 
          {/* ═══════════════════════════════════════════════
-          CUSTOM CONFIRM MODAL
+          EDIT PROFILE / ROLL NUMBER MODAL
           ═══════════════════════════════════════════════ */}
-         {confirmModal?.isOpen && (
-            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '2rem' }}>
-               <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(30,30,40,0.97), rgba(20,20,25,0.99))', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '32px', maxWidth: '420px', width: '100%', padding: '3rem', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: confirmModal.danger ? 'rgba(244,63,94,0.1)' : 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: confirmModal.danger ? '#f43f5e' : 'var(--primary)', marginBottom: '1.75rem' }}>
-                     <XOctagon size={28} />
-                  </div>
-                  <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', marginBottom: '0.875rem', letterSpacing: '-0.01em' }}>{confirmModal.title}</h2>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2.5rem' }}>{confirmModal.message}</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem' }}>
-                     <button onClick={() => setConfirmModal(null)}
-                        style={{ padding: '0.875rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
-                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                     >Cancel</button>
-                     <button onClick={confirmModal.onConfirm}
-                        style={{ padding: '0.875rem', borderRadius: '14px', border: 'none', background: confirmModal.danger ? '#f43f5e' : 'var(--primary)', color: '#fff', fontWeight: 800, cursor: 'pointer', boxShadow: confirmModal.danger ? '0 8px 20px rgba(244,63,94,0.25)' : '0 8px 20px rgba(139,92,246,0.25)', transition: 'all 0.2s' }}
-                        onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                        onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-                     >{confirmModal.confirmLabel || 'Confirm'}</button>
+         {editProfileOpen && (() => {
+            const parsed = parseAmritaRollNumber(editRollInput);
+            return (
+               <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '2rem' }}>
+                  <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(30,30,40,0.97), rgba(20,20,25,0.99))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '32px', maxWidth: '440px', width: '100%', padding: '2.5rem', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                        <div>
+                           <div style={{ fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>Account Profile</div>
+                           <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)' }}>{profile?.roll_number ? 'Update Profile' : 'Complete Registration'}</h2>
+                        </div>
+                        {profile?.roll_number && (
+                           <button onClick={() => setEditProfileOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '10px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}><X size={16} /></button>
+                        )}
+                     </div>
+
+                     <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: '1.75rem' }}>
+                        Your full name and roll number are required for your professor's class roster.
+                     </p>
+
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div>
+                           <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: '0.4rem' }}>Full Name</label>
+                           <input type="text" value={editNameInput} onChange={e => setEditNameInput(e.target.value)} placeholder="John Doe"
+                              style={{ width: '100%', padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '1rem', fontWeight: 700 }}
+                           />
+                        </div>
+
+                        <div>
+                           <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: '0.4rem' }}>Roll Number (e.g. CB.SC.U4AIE24213)</label>
+                           <input type="text" value={editRollInput} onChange={e => setEditRollInput(e.target.value)} placeholder="e.g. U4AIE24213"
+                              style={{ width: '100%', padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '1.1rem', fontWeight: 800, fontFamily: 'monospace', textTransform: 'uppercase' }}
+                           />
+                        </div>
+
+                        {/* Live Parse Preview Badge */}
+                        {editRollInput.trim() && (
+                           <div style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '14px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              <div style={{ fontSize: '0.65rem', color: '#34d399', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em' }}>Parsed Credentials</div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                 <div><span style={{ color: 'rgba(255,255,255,0.4)' }}>Section: </span><strong style={{ color: '#fff' }}>{parsed.section}</strong></div>
+                                 <div><span style={{ color: 'rgba(255,255,255,0.4)' }}>Department: </span><strong style={{ color: '#fff' }}>{parsed.dept || 'General'}</strong></div>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+
+                     <button onClick={handleSaveProfile} disabled={editProfileSaving || !editNameInput.trim() || !editRollInput.trim()}
+                        style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '1rem', cursor: editProfileSaving || !editNameInput.trim() || !editRollInput.trim() ? 'not-allowed' : 'pointer', opacity: !editNameInput.trim() || !editRollInput.trim() ? 0.5 : 1, boxShadow: '0 8px 20px rgba(139,92,246,0.3)' }}
+                     >{editProfileSaving ? 'Saving Profile...' : 'Save Profile Credentials'}</button>
                   </div>
                </div>
-            </div>
-         )}
+            );
+         })()}
       </div>
    );
 }

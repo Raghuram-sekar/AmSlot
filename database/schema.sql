@@ -20,6 +20,7 @@ CREATE TABLE public.users (
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('STUDENT', 'PROFESSOR')),
+  roll_number TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
