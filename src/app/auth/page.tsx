@@ -205,34 +205,48 @@ export default function AuthPage() {
     setError(null);
 
     try {
-      // 1. Try Supabase official OTP verification
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email: pendingUser.email,
-        token: otpCode.trim(),
-        type: 'signup'
-      });
-
-      // 2. If token matches generated OTP or official OTP verified, proceed
-      const isValidOtp = !verifyError || otpCode.trim() === pendingUser.generatedOtp || otpCode.trim() === '123456';
+      // Verify that student entered the matching 6-digit code sent to their email
+      const isMatchingOtp = otpCode.trim() === pendingUser.generatedOtp;
       
-      if (!isValidOtp) {
-        throw new Error("Invalid verification code. Please check your email or enter the code again.");
+      if (!isMatchingOtp) {
+        throw new Error("Invalid verification code. Please check your Amrita email inbox or click Resend Code.");
       }
 
-      // If user isn't logged in yet, attempt sign in or session creation
+      let activeUserId = pendingUser.id;
+
+      // 1. Authenticate / Sign Up in Supabase Auth
       if (pendingUser.password) {
-        await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
           email: pendingUser.email,
           password: pendingUser.password
         });
+
+        if (signInErr) {
+          // If not signed in yet, trigger signUp
+          const { data: signUpData } = await supabase.auth.signUp({
+            email: pendingUser.email,
+            password: pendingUser.password
+          });
+          if (signUpData?.user) {
+            activeUserId = signUpData.user.id;
+          }
+        } else if (signInData?.user) {
+          activeUserId = signInData.user.id;
+        }
       }
 
-      // Insert profile into public.users
+      // Fallback: fetch current logged in user ID
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user?.id) {
+        activeUserId = userData.user.id;
+      }
+
+      // 2. Insert profile into public.users
       const { error: insertError } = await supabase
         .from('users')
         .insert([
           {
-            id: pendingUser.id.startsWith('user_') ? (await supabase.auth.getUser()).data.user?.id || pendingUser.id : pendingUser.id,
+            id: activeUserId.startsWith('user_') ? (await supabase.auth.getUser()).data.user?.id || activeUserId : activeUserId,
             email: pendingUser.email,
             full_name: pendingUser.full_name,
             role: pendingUser.role,
