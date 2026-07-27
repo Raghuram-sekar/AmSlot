@@ -824,16 +824,21 @@ const CourseSkeleton = () => (
               <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
               <div className="logo-core" style={{ borderRadius: '6px' }}><Hourglass size={10} color="#fff" /></div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                <span style={{ fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-outfit)'}}>Am<span className="text-gradient">Slot</span></span>
                <span style={{ 
-                  display: 'inline-flex', alignItems: 'center', gap: '0.3rem', 
-                  padding: '0.15rem 0.45rem', background: 'rgba(139, 92, 246, 0.15)', 
-                  border: '1px solid rgba(139, 92, 246, 0.35)', borderRadius: '9999px', 
-                  fontSize: '0.65rem', fontWeight: 800, color: '#a78bfa', letterSpacing: '0.03em' 
+                  padding: '0.1rem 0.4rem', 
+                  background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(52,211,153,0.15))', 
+                  border: '1px solid rgba(167,139,250,0.3)', 
+                  borderRadius: '6px', 
+                  fontSize: '0.6rem', 
+                  fontWeight: 800, 
+                  color: '#34d399', 
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.04em',
+                  transform: 'translateY(-1px)'
                }}>
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399' }}></span>
-                  v2.0.0
+                  v2.0
                </span>
             </div>
           </div>

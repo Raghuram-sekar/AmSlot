@@ -322,14 +322,22 @@ export default function AuthPage() {
               <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
               <div className="logo-core" style={{ borderRadius: '8px' }}><Hourglass size={16} color="#fff" /></div>
             </div>
+            <span style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.03em' }}>
+              Am<span style={{ color: '#a78bfa' }}>Slot</span>
+            </span>
             <span style={{ 
-              display: 'inline-flex', alignItems: 'center', gap: '0.35rem', 
-              padding: '0.2rem 0.6rem', background: 'rgba(139, 92, 246, 0.15)', 
-              border: '1px solid rgba(139, 92, 246, 0.35)', borderRadius: '9999px', 
-              fontSize: '0.75rem', fontWeight: 800, color: '#a78bfa', letterSpacing: '0.04em' 
+              padding: '0.12rem 0.45rem', 
+              background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(52,211,153,0.15))', 
+              border: '1px solid rgba(167,139,250,0.3)', 
+              borderRadius: '6px', 
+              fontSize: '0.65rem', 
+              fontWeight: 800, 
+              color: '#34d399', 
+              fontFamily: 'monospace',
+              letterSpacing: '0.04em',
+              marginLeft: '0.1rem'
             }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span>
-              v2.0.0
+              v2.0
             </span>
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>

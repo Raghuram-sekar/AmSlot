@@ -10,23 +10,29 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 const Logo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', zIndex: 100 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', zIndex: 100 }}>
     <div style={{ width: '32px', height: '32px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95)', borderRadius: '10px', boxShadow: '0 0 15px rgba(76, 29, 149, 0.5), inset 0 1px 1px rgba(255,255,255,0.2)' }}>
         <Hourglass size={18} color="#fff" />
     </div>
-    <span style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.04em', fontFamily: 'var(--font-outfit)', color: '#fff'}}>
-      Am<span style={{ color: '#a78bfa' }}>Slot</span>
-    </span>
-    <span style={{ 
-      display: 'inline-flex', alignItems: 'center', gap: '0.35rem', 
-      padding: '0.2rem 0.55rem', background: 'rgba(139, 92, 246, 0.15)', 
-      border: '1px solid rgba(139, 92, 246, 0.35)', borderRadius: '9999px', 
-      fontSize: '0.7rem', fontWeight: 800, color: '#a78bfa', letterSpacing: '0.04em',
-      marginLeft: '0.2rem'
-    }}>
-      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span>
-      v2.0.0
-    </span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+      <span style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.04em', fontFamily: 'var(--font-outfit)', color: '#fff'}}>
+        Am<span style={{ color: '#a78bfa' }}>Slot</span>
+      </span>
+      <span style={{ 
+        padding: '0.12rem 0.45rem', 
+        background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(52,211,153,0.15))', 
+        border: '1px solid rgba(167,139,250,0.3)', 
+        borderRadius: '6px', 
+        fontSize: '0.65rem', 
+        fontWeight: 800, 
+        color: '#34d399', 
+        fontFamily: 'monospace',
+        letterSpacing: '0.04em',
+        transform: 'translateY(-1px)'
+      }}>
+        v2.0
+      </span>
+    </div>
   </div>
 );
 
