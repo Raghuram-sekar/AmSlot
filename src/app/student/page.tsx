@@ -7,7 +7,7 @@ import {
    CalendarDays, Users, CheckCircle2, Lock, ArrowRight, Hourglass, UserPlus,
    Clock, ArrowLeft, ChevronRight, Hash, LogOut, XOctagon, ListOrdered,
    Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil, History,
-   FileText, UploadCloud, Link as LinkIcon, Trash2, ExternalLink, FileCode, Paperclip, Download
+   FileText, UploadCloud, Link as LinkIcon, Trash2, ExternalLink, FileCode, Paperclip, Download, FolderUp, Upload
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
