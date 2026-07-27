@@ -132,11 +132,11 @@ export default function AuthPage() {
           console.warn("Supabase auth warning:", signUpError.message);
         }
 
-        if (authData?.user) {
+        if (authData?.user?.id) {
           userId = authData.user.id;
         }
 
-        // Send OTP email directly using Resend API Route (1-second delivery to Amrita inbox)
+        // Send 6-Digit OTP email directly to student Amrita inbox via Gmail SMTP API Route
         try {
           await fetch('/api/send-otp', {
             method: 'POST',
@@ -187,7 +187,7 @@ export default function AuthPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to resend email via Resend API.");
+        throw new Error("Failed to resend email.");
       }
 
       alert(`Verification code resent to ${pendingUser.email}. Please check your Amrita inbox and spam folder.`);
@@ -205,7 +205,7 @@ export default function AuthPage() {
     setError(null);
 
     try {
-      // Verify that student entered the matching 6-digit code sent to their email
+      // 1. Verify that student entered matching 6-digit code received in their Amrita email
       const isMatchingOtp = otpCode.trim() === pendingUser.generatedOtp;
       
       if (!isMatchingOtp) {
@@ -214,15 +214,15 @@ export default function AuthPage() {
 
       let activeUserId = pendingUser.id;
 
-      // 1. Authenticate / Sign Up in Supabase Auth
+      // 2. Sign in to create active authenticated session in browser
       if (pendingUser.password) {
         const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
           email: pendingUser.email,
           password: pendingUser.password
         });
 
-        if (signInErr) {
-          // If not signed in yet, trigger signUp
+        if (signInErr && signInErr.message.includes('Invalid login credentials')) {
+          // If first-time user record needs activation in auth.users
           const { data: signUpData } = await supabase.auth.signUp({
             email: pendingUser.email,
             password: pendingUser.password
@@ -230,18 +230,22 @@ export default function AuthPage() {
           if (signUpData?.user) {
             activeUserId = signUpData.user.id;
           }
+          await supabase.auth.signInWithPassword({
+            email: pendingUser.email,
+            password: pendingUser.password
+          });
         } else if (signInData?.user) {
           activeUserId = signInData.user.id;
         }
       }
 
-      // Fallback: fetch current logged in user ID
+      // 3. Fetch current logged in user ID
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user?.id) {
         activeUserId = userData.user.id;
       }
 
-      // 2. Insert profile into public.users
+      // 4. Insert profile into public.users
       const { error: insertError } = await supabase
         .from('users')
         .insert([
@@ -258,6 +262,7 @@ export default function AuthPage() {
         console.warn("Profile insert notice:", insertError.message);
       }
 
+      // 5. Redirect user to their respective dashboard
       if (pendingUser.role === 'PROFESSOR') {
         router.push('/professor');
       } else {
