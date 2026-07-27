@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Hourglass, Mail, Lock, User, GraduationCap, ShieldCheck } from 'lucide-react';
+import { Hourglass, Mail, Lock, User, GraduationCap, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
@@ -82,7 +82,7 @@ export default function AuthPage() {
         // Sign Up - Enforce Amrita Email Domain
         const cleanEmail = email.trim().toLowerCase();
         if (!isAmritaEmail(cleanEmail)) {
-          throw new Error("Registration restricted: Only official Amrita University email IDs (@cb.students.amrita.edu, @amrita.edu) are allowed.");
+          throw new Error("Registration is restricted strictly to official Amrita University email addresses.");
         }
 
         // Check duplicate email in public.users
@@ -351,8 +351,28 @@ export default function AuthPage() {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#f43f5e', padding: '1rem', borderRadius: '8px', fontSize: '0.875rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-            {error}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.85rem', 
+            background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(139, 92, 246, 0.08))', 
+            border: '1px solid rgba(244, 63, 94, 0.28)', 
+            borderLeft: '4px solid #f43f5e', 
+            color: '#fda4af', 
+            padding: '0.875rem 1.1rem', 
+            borderRadius: '12px', 
+            fontSize: '0.85rem', 
+            lineHeight: '1.4', 
+            marginBottom: '1.5rem',
+            boxShadow: '0 8px 20px rgba(244, 63, 94, 0.1)',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div style={{ flexShrink: 0, width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f43f5e' }}>
+              <ShieldAlert size={16} />
+            </div>
+            <div style={{ flex: 1, fontWeight: 500 }}>
+              {error}
+            </div>
           </div>
         )}
 
