@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import {
@@ -135,6 +135,7 @@ export default function StudentPortal() {
    const [showLinkModal, setShowLinkModal] = useState(false);
    const [linkTitleInput, setLinkTitleInput] = useState('');
    const [linkUrlInput, setLinkUrlInput] = useState('');
+   const fileInputRef = useRef<HTMLInputElement>(null);
 
    // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -1423,7 +1424,7 @@ export default function StudentPortal() {
                                           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: isUrgent ? '#fbbf24' : 'rgba(255,255,255,0.7)' }}>{dayLabel}</div>
                                           <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.25rem' }}>until presentation</div>
                                        </div>
-                                                    {/* Quick stat */}
+                                       {/* Quick stat */}
                                        <div style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.1)', borderRadius: '18px', padding: '1.25rem', textAlign: 'center' }}>
                                           <div style={{ fontSize: '0.65rem', color: 'rgba(52,211,153,0.5)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.4rem' }}>Duration</div>
                                           <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)' }}>
@@ -1437,6 +1438,74 @@ export default function StudentPortal() {
                                           <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.1rem' }}>presentation window</div>
                                        </div>
                                     </div>
+                                 </div>
+
+                                 {/* ══ BOTTOM ROW: Upload Review Documents Section ══ */}
+                                 <div style={{ background: 'linear-gradient(145deg, rgba(20, 20, 30, 0.6), rgba(15, 15, 22, 0.8))', border: '1px solid rgba(139,92,246,0.18)', borderRadius: '28px', padding: '2rem 2.25rem', backdropFilter: 'blur(20px)', boxShadow: '0 20px 50px rgba(0,0,0,0.4)', marginTop: '0.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                       <div>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                                             <FolderUp size={16} style={{ color: 'var(--primary)' }} />
+                                             <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.14em' }}>Review Submission</span>
+                                          </div>
+                                          <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)' }}>Upload Review Documents</h3>
+                                          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', margin: '0.2rem 0 0 0' }}>Attach code files, notebook (.ipynb), PDF report, or GitHub links for your evaluation.</p>
+                                       </div>
+
+                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                          <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} accept=".pdf,.ipynb,.py,.zip,.docx,.txt" />
+                                          <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
+                                             style={{ padding: '0.7rem 1.25rem', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px', color: '#c4b5fd', fontWeight: 800, fontSize: '0.85rem', cursor: uploadingFile ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                                             onMouseOver={e => e.currentTarget.style.background = 'rgba(139,92,246,0.25)'}
+                                             onMouseOut={e => e.currentTarget.style.background = 'rgba(139,92,246,0.15)'}
+                                          >
+                                             {uploadingFile ? <Hourglass size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={14} />}
+                                             {uploadingFile ? 'Uploading...' : 'Upload File'}
+                                          </button>
+
+                                          <button onClick={() => setShowLinkModal(true)}
+                                             style={{ padding: '0.7rem 1.25rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                                             onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                                             onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                          >
+                                             <LinkIcon size={14} /> Add Link
+                                          </button>
+                                       </div>
+                                    </div>
+
+                                    {/* Submitted files list */}
+                                    {submissionFiles.length === 0 ? (
+                                       <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '18px', border: '1px dashed rgba(255,255,255,0.08)' }}>
+                                          <FileText size={32} style={{ color: 'rgba(255,255,255,0.15)', marginBottom: '0.75rem' }} />
+                                          <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>No documents attached yet</div>
+                                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.2rem' }}>Upload your project slides, code repositories, or reports before presentation time.</div>
+                                       </div>
+                                    ) : (
+                                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                                          {submissionFiles.map((file) => (
+                                             <div key={file.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                                                   <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: file.file_type === 'link' ? 'rgba(52,211,153,0.12)' : 'rgba(139,92,246,0.12)', border: file.file_type === 'link' ? '1px solid rgba(52,211,153,0.25)' : '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: file.file_type === 'link' ? '#34d399' : '#c4b5fd', flexShrink: 0 }}>
+                                                      {file.file_type === 'link' ? <LinkIcon size={18} /> : <FileText size={18} />}
+                                                   </div>
+                                                   <div style={{ overflow: 'hidden' }}>
+                                                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
+                                                      <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.1rem' }}>{file.student_name ? `by ${file.student_name}` : file.file_type}</div>
+                                                   </div>
+                                                </div>
+
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                                                   <a href={file.file_url} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
+                                                      <ExternalLink size={14} />
+                                                   </a>
+                                                   <button onClick={() => handleDeleteSubmissionFile(file.id)} style={{ background: 'rgba(244,63,94,0.08)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f43f5e', cursor: 'pointer' }}>
+                                                      <Trash2 size={14} />
+                                                   </button>
+                                                </div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    )}
                                  </div>
                               </div>
                            );
