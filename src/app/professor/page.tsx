@@ -2272,45 +2272,45 @@ const CourseSkeleton = () => (
                 </div>
 
                 {/* Right: Data Input Dash with Pattern 2 Sub-Tabs */}
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', minWidth: 0, overflow: 'hidden' }}>
                     
                     {/* Sub-Tab Navigation Header */}
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '4px', gap: '4px' }}>
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '4px', gap: '4px', width: '100%', boxSizing: 'border-box' }}>
                        <button 
                           type="button"
                           onClick={() => setManageSubTab('EVALUATION')}
                           style={{
-                             flex: 1, padding: '0.65rem', borderRadius: '12px', border: 'none',
-                             background: manageSubTab === 'EVALUATION' ? 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4))' : 'transparent',
+                             flex: 1, minWidth: 0, padding: '0.6rem 0.5rem', borderRadius: '12px', border: 'none',
+                             background: manageSubTab === 'EVALUATION' ? 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(109,40,217,0.45))' : 'transparent',
                              color: manageSubTab === 'EVALUATION' ? '#fff' : 'rgba(255,255,255,0.5)',
                              boxShadow: manageSubTab === 'EVALUATION' ? '0 4px 12px rgba(139,92,246,0.2)' : 'none',
-                             fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', transition: 'all 0.2s'
+                             fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', transition: 'all 0.2s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                           }}
                        >
-                          <CheckCircle2 size={15} /> Evaluation & Grading
+                          <CheckCircle2 size={14} /> Evaluation
                        </button>
 
                        <button 
                           type="button"
                           onClick={() => setManageSubTab('DELIVERABLES')}
                           style={{
-                             flex: 1, padding: '0.65rem', borderRadius: '12px', border: 'none',
-                             background: manageSubTab === 'DELIVERABLES' ? 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4))' : 'transparent',
+                             flex: 1, minWidth: 0, padding: '0.6rem 0.5rem', borderRadius: '12px', border: 'none',
+                             background: manageSubTab === 'DELIVERABLES' ? 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(109,40,217,0.45))' : 'transparent',
                              color: manageSubTab === 'DELIVERABLES' ? '#fff' : 'rgba(255,255,255,0.5)',
                              boxShadow: manageSubTab === 'DELIVERABLES' ? '0 4px 12px rgba(139,92,246,0.2)' : 'none',
-                             fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', transition: 'all 0.2s'
+                             fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', transition: 'all 0.2s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                           }}
                        >
-                          <FileText size={15} /> Deliverables ({professorSlotFiles.length})
+                          <FileText size={14} /> Deliverables ({professorSlotFiles.length})
                        </button>
                     </div>
 
                     {/* Sub-Tab 1: Evaluation View */}
                     {manageSubTab === 'EVALUATION' && (
-                       <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                       <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                           {/* Compact Grade Input */}
-                          <div style={{ background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '22px', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.14em', fontWeight: 900 }}>Final Grade</div>
+                          <div style={{ background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '20px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                             <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.14em', fontWeight: 900 }}>Final Grade</div>
                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
                                 <input 
                                   type="number" 
@@ -2318,16 +2318,16 @@ const CourseSkeleton = () => (
                                   onChange={e=>setManageGrade(e.target.value)} 
                                   placeholder="--"
                                   min="0"
-                                  style={{ width: '90px', background: 'transparent', border: 'none', color: '#fff', fontSize: '2.5rem', fontWeight: 900, textAlign: 'right', outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)' }}
+                                  style={{ width: '80px', background: 'transparent', border: 'none', color: '#fff', fontSize: '2.2rem', fontWeight: 900, textAlign: 'right', outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)' }}
                                 />
-                                <span style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.2)', fontWeight: 800 }}>/</span>
+                                <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.2)', fontWeight: 800 }}>/</span>
                                 <input 
                                   type="number" 
                                   value={manageMaxGrade} 
                                   onChange={e=>setManageMaxGrade(e.target.value)} 
                                   placeholder="100"
                                   min="0"
-                                  style={{ width: '70px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '1.5rem', fontWeight: 800, outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)', transition: 'color 0.2s' }}
+                                  style={{ width: '60px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '1.3rem', fontWeight: 800, outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)', transition: 'color 0.2s' }}
                                   onFocus={e=>e.currentTarget.style.color='#fff'}
                                   onBlur={e=>e.currentTarget.style.color='rgba(255,255,255,0.4)'}
                                 />
@@ -2335,13 +2335,13 @@ const CourseSkeleton = () => (
                           </div>
 
                           {/* Professor Insights Text Area */}
-                          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
-                             <h3 style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.75rem', fontWeight: 900 }}>Professor Insights</h3>
+                          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column' }}>
+                             <h3 style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.5rem', fontWeight: 900 }}>Professor Insights</h3>
                              <textarea 
                                value={manageNotes} 
                                onChange={e=>setManageNotes(e.target.value)} 
                                placeholder="Log detailed private commentary, rubric notes, or presentation critiques here..." 
-                               style={{ minHeight: '140px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none', resize: 'vertical', padding: '0.75rem 1rem', lineHeight: '1.5' }} 
+                               style={{ minHeight: '110px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#fff', fontSize: '0.88rem', outline: 'none', resize: 'vertical', padding: '0.65rem 0.85rem', lineHeight: '1.5' }} 
                              />
                           </div>
                        </div>
@@ -2349,21 +2349,21 @@ const CourseSkeleton = () => (
 
                     {/* Sub-Tab 2: Deliverables View */}
                     {manageSubTab === 'DELIVERABLES' && (
-                       <div className="animate-fade-in" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1.25rem 1.5rem', minHeight: '260px', display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                       <div className="animate-fade-in" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '1rem 1.25rem', height: '220px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexShrink: 0 }}>
                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
-                                   <FileText size={14} />
+                                <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '26px', height: '26px', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
+                                   <FileText size={13} />
                                 </div>
-                                <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Review Deliverables ({professorSlotFiles.length})</h3>
+                                <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Review Deliverables ({professorSlotFiles.length})</h3>
                              </div>
-                             {fetchingSlotFiles && <Hourglass className="animate-spin" size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                             {fetchingSlotFiles && <Hourglass className="animate-spin" size={13} style={{ color: 'rgba(255,255,255,0.4)' }} />}
                           </div>
 
                           {professorSlotFiles.length === 0 ? (
-                             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '2rem 0', textAlign: 'center' }}>No submission documents attached by squad yet.</div>
+                             <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '1.5rem 0', textAlign: 'center' }}>No submission documents attached by squad yet.</div>
                           ) : (
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '230px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'auto', paddingRight: '0.25rem', flex: 1 }}>
                                 {professorSlotFiles.map(file => {
                                    const isLink = file.file_type === 'link';
                                    const isPdf = file.file_type === 'pdf';
@@ -2373,37 +2373,37 @@ const CourseSkeleton = () => (
                                    const iconBorder = isLink ? 'rgba(52,211,153,0.3)' : isPdf ? 'rgba(251,191,36,0.3)' : isCode ? 'rgba(139,92,246,0.3)' : 'rgba(96,165,250,0.3)';
 
                                    return (
-                                      <div key={file.id} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '0.85rem 1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', overflow: 'hidden' }}>
-                                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: iconBg, border: `1px solid ${iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
-                                               {isLink ? <LinkIcon size={18} /> : isPdf ? <FileText size={18} /> : isCode ? <FileCode size={18} /> : <Paperclip size={18} />}
+                                      <div key={file.id} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '0.6rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', transition: 'all 0.2s', flexShrink: 0 }} onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
+                                            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: iconBg, border: `1px solid ${iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
+                                               {isLink ? <LinkIcon size={16} /> : isPdf ? <FileText size={16} /> : isCode ? <FileCode size={16} /> : <Paperclip size={16} />}
                                             </div>
                                             <div style={{ overflow: 'hidden' }}>
-                                               <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
-                                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
-                                                  <span style={{ fontSize: '0.65rem', color: iconColor, fontWeight: 900, textTransform: 'uppercase', padding: '0.1rem 0.4rem', background: iconBg, borderRadius: '5px', border: `1px solid ${iconBorder}` }}>{file.file_type}</span>
-                                                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>• {file.file_size}</span>
+                                               <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
+                                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
+                                                  <span style={{ fontSize: '0.62rem', color: iconColor, fontWeight: 900, textTransform: 'uppercase', padding: '0.05rem 0.35rem', background: iconBg, borderRadius: '4px', border: `1px solid ${iconBorder}` }}>{file.file_type}</span>
+                                                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>• {file.file_size}</span>
                                                </div>
                                             </div>
                                          </div>
 
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
                                             <button 
                                                onClick={() => setPreviewFile(file)}
-                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.85rem', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
                                                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
                                                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                                             >
-                                               <Eye size={13} /> Preview
+                                               <Eye size={12} /> Preview
                                             </button>
 
                                             <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
-                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.95rem', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4))', border: '1px solid rgba(139,92,246,0.4)', color: '#fff', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s' }}
+                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4))', border: '1px solid rgba(139,92,246,0.4)', color: '#fff', fontSize: '0.75rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s' }}
                                                onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                                                onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                                             >
-                                               {isLink ? <ExternalLink size={13} /> : <Download size={13} />}
-                                               {isLink ? 'Open Link' : 'Download'}
+                                               {isLink ? <ExternalLink size={12} /> : <Download size={12} />}
+                                               {isLink ? 'Open' : 'Download'}
                                             </a>
                                          </div>
                                       </div>
