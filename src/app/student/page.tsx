@@ -1369,14 +1369,11 @@ export default function StudentPortal() {
                                                       {slotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                                                    </div>
                                                 </div>
-                                                {/* Countdown badge */}
                                                 <div style={{ background: isUrgent ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isUrgent ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '14px', padding: '0.6rem 1rem', textAlign: 'center', minWidth: '72px' }}>
                                                    <div style={{ fontSize: '1.3rem', fontWeight: 900, color: isUrgent ? '#fbbf24' : '#fff', fontFamily: 'var(--font-outfit)', lineHeight: 1 }}>{Math.abs(daysAway)}</div>
                                                    <div style={{ fontSize: '0.6rem', color: isUrgent ? 'rgba(251,191,36,0.7)' : 'rgba(255,255,255,0.3)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.2rem' }}>{daysAway < 0 ? 'days ago' : daysAway === 0 ? 'today!' : 'days left'}</div>
                                                 </div>
                                              </div>
-
-                                             {/* Meta fields */}
                                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 1.5rem', marginBottom: '1.75rem' }}>
                                                 {[
                                                    { label: 'Team', value: myGroup.name },
@@ -1390,8 +1387,6 @@ export default function StudentPortal() {
                                                    </div>
                                                 ))}
                                              </div>
-
-                                             {/* Bottom status row */}
                                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: daysAway < 0 ? 'rgba(251,191,36,0.08)' : 'rgba(52,211,153,0.08)', border: `1px solid ${daysAway < 0 ? 'rgba(251,191,36,0.2)' : 'rgba(52,211,153,0.2)'}`, borderRadius: '10px', padding: '0.5rem 0.875rem' }}>
                                                    <Shield size={13} style={{ color: daysAway < 0 ? '#fbbf24' : '#34d399' }} />
@@ -1410,13 +1405,9 @@ export default function StudentPortal() {
                                           </div>
                                        </div>
                                     </div>
-
-                                    {/* ══ RIGHT: Countdown / Status Panel ══ */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                       {/* Days countdown ring */}
                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '24px', padding: '1.75rem', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                                           <div style={{ position: 'absolute', inset: 0, background: isUrgent ? 'radial-gradient(circle at 50% 100%, rgba(251,191,36,0.04) 0%, transparent 60%)' : 'none', pointerEvents: 'none' }} />
-                                          {/* SVG Ring countdown */}
                                           <svg width="100" height="100" viewBox="0 0 100 100" style={{ marginBottom: '0.75rem' }}>
                                              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="5" />
                                              <circle cx="50" cy="50" r="42" fill="none"
@@ -1432,8 +1423,7 @@ export default function StudentPortal() {
                                           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: isUrgent ? '#fbbf24' : 'rgba(255,255,255,0.7)' }}>{dayLabel}</div>
                                           <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', marginTop: '0.25rem' }}>until presentation</div>
                                        </div>
-
-                                       {/* Quick stat */}
+                                                    {/* Quick stat */}
                                        <div style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.1)', borderRadius: '18px', padding: '1.25rem', textAlign: 'center' }}>
                                           <div style={{ fontSize: '0.65rem', color: 'rgba(52,211,153,0.5)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.4rem' }}>Duration</div>
                                           <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)' }}>
@@ -1469,14 +1459,15 @@ export default function StudentPortal() {
                                      return (
                                         <button key={ev.id} onClick={() => { setActiveDate(ev.date); setSelectedSlot(null); }}
                                            style={{
-                                              padding: '0.875rem 1.25rem', borderRadius: '16px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s',
+                                              padding: '0.875rem 0.75rem', borderRadius: '18px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s',
+                                              width: '90px', minWidth: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                                               background: isActive ? (isPast ? 'linear-gradient(135deg, #d97706, #b45309)' : 'linear-gradient(135deg, var(--primary), #6d28d9)') : (isPast ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.03)'),
                                               border: `1px solid ${isActive ? 'transparent' : isPast ? 'rgba(251,191,36,0.18)' : 'rgba(255,255,255,0.06)'}`,
                                               boxShadow: isActive ? (isPast ? '0 8px 20px rgba(217,119,6,0.35)' : '0 8px 20px rgba(139,92,246,0.35)') : 'none',
-                                              transform: isActive ? 'scale(1.04)' : 'scale(1)', minWidth: '85px'
+                                              transform: isActive ? 'scale(1.04)' : 'scale(1)',
                                            }}
                                         >
-                                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.8)' : isPast ? '#fbbf24' : 'rgba(255,255,255,0.3)', marginBottom: '0.3rem' }}>
+                                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.8)' : isPast ? '#fbbf24' : 'rgba(255,255,255,0.3)', marginBottom: '0.2rem' }}>
                                               {d.toLocaleDateString('en-US', { weekday: 'short' })}
                                            </div>
                                            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', lineHeight: 1, fontFamily: 'var(--font-outfit)' }}>{d.getDate()}</div>
