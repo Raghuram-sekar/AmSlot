@@ -1544,6 +1544,41 @@ export default function StudentPortal() {
                </div>
             );
          })()}
+
+          {/* =========================================================
+              CONFIRMATION MODAL (RESCHEDULE / WITHDRAW SQUAD)
+              ========================================================= */}
+          {confirmModal?.isOpen && (
+             <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: '2rem' }}>
+                <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 25, 0.98))', border: `1px solid ${confirmModal.danger ? 'rgba(244,63,94,0.3)' : 'rgba(139,92,246,0.3)'}`, borderRadius: '32px', width: '100%', maxWidth: '440px', padding: '2.5rem', position: 'relative', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+                   <div style={{ background: confirmModal.danger ? 'rgba(244, 63, 94, 0.1)' : 'rgba(139, 92, 246, 0.1)', width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: confirmModal.danger ? '#f43f5e' : '#c4b5fd', marginBottom: '1.5rem' }}>
+                      {confirmModal.danger ? <XOctagon size={28} /> : <RotateCcw size={28} />}
+                   </div>
+                   
+                   <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', marginBottom: '0.75rem', letterSpacing: '-0.01em', fontFamily: 'var(--font-outfit)' }}>{confirmModal.title}</h2>
+                   <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', lineHeight: '1.5', marginBottom: '2rem' }}>{confirmModal.message}</p>
+                   
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <button 
+                         onClick={() => setConfirmModal(null)}
+                         style={{ padding: '0.875rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#fff', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                         onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                         onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                         Cancel
+                      </button>
+                      <button 
+                         onClick={() => confirmModal.onConfirm()}
+                         style={{ padding: '0.875rem', borderRadius: '14px', border: 'none', background: confirmModal.danger ? 'linear-gradient(135deg, #f43f5e, #e11d48)' : 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontWeight: 800, cursor: 'pointer', boxShadow: confirmModal.danger ? '0 8px 16px rgba(244, 63, 94, 0.2)' : '0 8px 16px rgba(139, 92, 246, 0.2)', transition: 'all 0.2s' }}
+                         onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                         onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                         {confirmModal.confirmLabel || 'Confirm'}
+                      </button>
+                   </div>
+                </div>
+             </div>
+          )}
       </div>
    );
 }
