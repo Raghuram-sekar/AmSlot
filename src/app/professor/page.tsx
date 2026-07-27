@@ -2338,32 +2338,32 @@ const CourseSkeleton = () => (
                           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column' }}>
                              <h3 style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.5rem', fontWeight: 900 }}>Professor Insights</h3>
                              <textarea 
-                               value={manageNotes} 
-                               onChange={e=>setManageNotes(e.target.value)} 
-                               placeholder="Log detailed private commentary, rubric notes, or presentation critiques here..." 
-                               style={{ minHeight: '110px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#fff', fontSize: '0.88rem', outline: 'none', resize: 'vertical', padding: '0.65rem 0.85rem', lineHeight: '1.5' }} 
-                             />
-                          </div>
-                       </div>
-                    )}
-
+                                value={manageNotes} 
+                                onChange={e=>setManageNotes(e.target.value)} 
+                                placeholder="Log detailed private commentary, rubric notes, or presentation critiques here..." 
+                                style={{ minHeight: '110px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#fff', fontSize: '0.88rem', outline: 'none', resize: 'vertical', padding: '0.65rem 0.85rem', lineHeight: '1.5' }} 
+                              />
+                           </div>
+                        </div>
+                     )}
+                    
                     {/* Sub-Tab 2: Deliverables View */}
                     {manageSubTab === 'DELIVERABLES' && (
-                       <div className="animate-fade-in" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '1rem 1.25rem', height: '220px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexShrink: 0 }}>
+                       <div className="animate-fade-in" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '1.25rem 1.5rem', minHeight: '240px', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '26px', height: '26px', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
-                                   <FileText size={13} />
+                                <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
+                                   <FileText size={14} />
                                 </div>
-                                <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Review Deliverables ({professorSlotFiles.length})</h3>
+                                <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Review Deliverables ({professorSlotFiles.length})</h3>
                              </div>
-                             {fetchingSlotFiles && <Hourglass className="animate-spin" size={13} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                             {fetchingSlotFiles && <Hourglass className="animate-spin" size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />}
                           </div>
 
                           {professorSlotFiles.length === 0 ? (
-                             <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '1.5rem 0', textAlign: 'center' }}>No submission documents attached by squad yet.</div>
+                             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '2rem 0', textAlign: 'center' }}>No submission documents attached by squad yet.</div>
                           ) : (
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'auto', paddingRight: '0.25rem', flex: 1 }}>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                                 {professorSlotFiles.map(file => {
                                    const isLink = file.file_type === 'link';
                                    const isPdf = file.file_type === 'pdf';
@@ -2373,37 +2373,38 @@ const CourseSkeleton = () => (
                                    const iconBorder = isLink ? 'rgba(52,211,153,0.3)' : isPdf ? 'rgba(251,191,36,0.3)' : isCode ? 'rgba(139,92,246,0.3)' : 'rgba(96,165,250,0.3)';
 
                                    return (
-                                      <div key={file.id} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '0.6rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', transition: 'all 0.2s', flexShrink: 0 }} onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
-                                            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: iconBg, border: `1px solid ${iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
+                                      <div key={file.id} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: iconBg, border: `1px solid ${iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
                                                {isLink ? <LinkIcon size={16} /> : isPdf ? <FileText size={16} /> : isCode ? <FileCode size={16} /> : <Paperclip size={16} />}
                                             </div>
                                             <div style={{ overflow: 'hidden' }}>
-                                               <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
-                                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
-                                                  <span style={{ fontSize: '0.62rem', color: iconColor, fontWeight: 900, textTransform: 'uppercase', padding: '0.05rem 0.35rem', background: iconBg, borderRadius: '4px', border: `1px solid ${iconBorder}` }}>{file.file_type}</span>
-                                                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>• {file.file_size}</span>
+                                               <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
+                                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.15rem' }}>
+                                                  <span style={{ fontSize: '0.62rem', color: iconColor, fontWeight: 900, textTransform: 'uppercase', padding: '0.08rem 0.4rem', background: iconBg, borderRadius: '4px', border: `1px solid ${iconBorder}` }}>{file.file_type}</span>
+                                                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>• {file.file_size}</span>
                                                </div>
                                             </div>
                                          </div>
 
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
                                             <button 
                                                onClick={() => setPreviewFile(file)}
-                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
-                                               onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-                                               onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                               title="View Deliverable Details & Metadata"
+                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.45rem 0.75rem', borderRadius: '9px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                                               onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff'; }}
+                                               onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
                                             >
-                                               <Eye size={12} /> Preview
+                                               <Eye size={13} /> Info
                                             </button>
 
                                             <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
-                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4))', border: '1px solid rgba(139,92,246,0.4)', color: '#fff', fontSize: '0.75rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s' }}
+                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.95rem', borderRadius: '9px', background: 'linear-gradient(135deg, rgba(139,92,246,0.35), rgba(109,40,217,0.45))', border: '1px solid rgba(139,92,246,0.4)', color: '#fff', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(139,92,246,0.2)' }}
                                                onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                                                onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                                             >
-                                               {isLink ? <ExternalLink size={12} /> : <Download size={12} />}
-                                               {isLink ? 'Open' : 'Download'}
+                                               {isLink ? <ExternalLink size={13} /> : <Download size={13} />}
+                                               {isLink ? 'Open Link' : 'Download'}
                                             </a>
                                          </div>
                                       </div>
@@ -2415,25 +2416,25 @@ const CourseSkeleton = () => (
                     )}
 
                  </div>
-             </div>
+              </div>
 
-             {/* Footer Action Bar */}
-             <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <button onClick={saveSlotDetails} disabled={manageSaving} style={{ background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', padding: '0.85rem 2.25rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '14px', display: 'flex', gap: '0.6rem', alignItems: 'center', cursor: manageSaving?'not-allowed':'pointer', border: 'none', boxShadow: '0 8px 24px rgba(139,92,246,0.3)', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.transform='translateY(-2px)'} onMouseOut={e=>e.currentTarget.style.transform='translateY(0)'}>
-                   {manageSaving ? <Hourglass className="animate-spin" size={18}/> : <><CheckCircle2 size={18} /> Save Session Record</>}
-                </button>
-             </div>
+              {/* Footer Action Bar */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                 <button onClick={saveSlotDetails} disabled={manageSaving} style={{ background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', padding: '0.85rem 2.25rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '14px', display: 'flex', gap: '0.6rem', alignItems: 'center', cursor: manageSaving?'not-allowed':'pointer', border: 'none', boxShadow: '0 8px 24px rgba(139,92,246,0.3)', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.transform='translateY(-2px)'} onMouseOut={e=>e.currentTarget.style.transform='translateY(0)'}>
+                    {manageSaving ? <Hourglass className="animate-spin" size={18}/> : <><CheckCircle2 size={18} /> Save Session Record</>}
+                 </button>
+              </div>
 
-          </div>
-        </div>
-       )}
+           </div>
+         </div>
+        )}
 
        {/* =========================================================
-           DELIVERABLES INSPECTION DRAWER / PREVIEWER MODAL
+           DELIVERABLE METADATA & SPECS MODAL
            ========================================================= */}
        {previewFile && (
          <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,10,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500, padding: '1.5rem' }}>
-           <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(22, 22, 34, 0.98), rgba(14, 14, 22, 0.99))', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '28px', width: '100%', maxWidth: '580px', padding: '2rem 2.25rem', position: 'relative', boxShadow: '0 30px 80px rgba(0,0,0,0.7), 0 0 50px rgba(139,92,246,0.15)' }}>
+           <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(22, 22, 34, 0.98), rgba(14, 14, 22, 0.99))', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '28px', width: '100%', maxWidth: '520px', padding: '2rem 2.25rem', position: 'relative', boxShadow: '0 30px 80px rgba(0,0,0,0.7), 0 0 50px rgba(139,92,246,0.15)' }}>
              
              {/* Header */}
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '1rem' }}>
@@ -2442,8 +2443,8 @@ const CourseSkeleton = () => (
                       {previewFile.file_type === 'link' ? <LinkIcon size={20} /> : <FileText size={20} />}
                    </div>
                    <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.15rem' }}>Review Deliverable</div>
-                      <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)', maxWidth: '360px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{previewFile.file_name}</h2>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.15rem' }}>Deliverable Specification</div>
+                      <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{previewFile.file_name}</h2>
                    </div>
                 </div>
 
@@ -2467,18 +2468,27 @@ const CourseSkeleton = () => (
 
              {/* Action Bar */}
              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <button onClick={() => { navigator.clipboard.writeText(previewFile.file_url); showToast("Link copied to clipboard!", "success"); }}
-                   style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                   <Copy size={14} /> Copy Link
-                </button>
+                {previewFile.file_type === 'link' ? (
+                   <>
+                      <button onClick={() => { navigator.clipboard.writeText(previewFile.file_url); showToast("URL copied to clipboard!", "success"); }}
+                         style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                      >
+                         <Copy size={14} /> Copy URL
+                      </button>
 
-                <a href={previewFile.file_url} target="_blank" rel="noopener noreferrer" download={previewFile.file_type !== 'link' ? previewFile.file_name : undefined}
-                   style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontSize: '0.85rem', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 8px 20px rgba(139,92,246,0.3)' }}
-                >
-                   {previewFile.file_type === 'link' ? <ExternalLink size={14} /> : <Download size={14} />}
-                   {previewFile.file_type === 'link' ? 'Open URL in New Tab' : 'View & Download File'}
-                </a>
+                      <a href={previewFile.file_url} target="_blank" rel="noopener noreferrer"
+                         style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontSize: '0.85rem', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 8px 20px rgba(139,92,246,0.3)' }}
+                      >
+                         <ExternalLink size={14} /> Open URL in New Tab
+                      </a>
+                   </>
+                ) : (
+                   <a href={previewFile.file_url} target="_blank" rel="noopener noreferrer" download={previewFile.file_name}
+                      style={{ padding: '0.75rem 2rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontSize: '0.88rem', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 8px 20px rgba(139,92,246,0.3)' }}
+                   >
+                      <Download size={16} /> Download File
+                   </a>
+                )}
              </div>
 
            </div>
