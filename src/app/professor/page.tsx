@@ -3,7 +3,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search } from 'lucide-react';
+import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search, FileCode, ExternalLink, Paperclip, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 
@@ -112,6 +112,8 @@ export default function ProfessorDashboard() {
   const [manageMaxGrade, setManageMaxGrade] = useState('100');
   const [manageNotes, setManageNotes] = useState('');
   const [manageSaving, setManageSaving] = useState(false);
+  const [professorSlotFiles, setProfessorSlotFiles] = useState<any[]>([]);
+  const [fetchingSlotFiles, setFetchingSlotFiles] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
   const [waitlistEntries, setWaitlistEntries] = useState<any[]>([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
@@ -558,10 +560,23 @@ export default function ProfessorDashboard() {
     setScheduleLoading(false);
   };
 
+  const fetchSlotSubmissions = async (slotId: string) => {
+     if (!slotId) return;
+     setFetchingSlotFiles(true);
+     const { data } = await supabase
+        .from('submission_files')
+        .select('*')
+        .eq('slot_id', slotId)
+        .order('created_at', { ascending: false });
+     if (data) setProfessorSlotFiles(data);
+     setFetchingSlotFiles(false);
+  };
+
   const openManageModal = (slot: any) => {
      setManageSlot(slot);
      setManageStatus(slot.status);
      setManageNotes(slot.private_notes || '');
+     setProfessorSlotFiles([]);
      
      if (slot.grade && typeof slot.grade === 'string' && slot.grade.includes('/')) {
         const [sc, mx] = slot.grade.split('/');
@@ -571,6 +586,8 @@ export default function ProfessorDashboard() {
         setManageGrade(slot.grade?.toString() || '');
         setManageMaxGrade('100');
      }
+
+     fetchSlotSubmissions(slot.id);
   };
 
   const saveSlotDetails = async () => {
@@ -2281,6 +2298,43 @@ const CourseSkeleton = () => (
                          />
                       </div>
                    </div>
+
+                    {/* Student Uploaded Review Documents */}
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '28px', padding: '1.75rem 2rem' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                             <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
+                                <FileText size={16} />
+                             </div>
+                             <h3 style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 800 }}>Upload Review Documents ({professorSlotFiles.length})</h3>
+                          </div>
+                          {fetchingSlotFiles && <Hourglass className="animate-spin" size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                       </div>
+
+                       {professorSlotFiles.length === 0 ? (
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '0.5rem 0' }}>No submission documents uploaded by squad yet.</div>
+                       ) : (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                             {professorSlotFiles.map(file => {
+                                const isLink = file.file_type === 'link';
+                                return (
+                                   <div key={file.id} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{file.file_name}</div>
+                                      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>{file.file_size}</span>
+                                      <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
+                                         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.7rem', borderRadius: '8px', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd', fontSize: '0.75rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s' }}
+                                         onMouseOver={e => e.currentTarget.style.background = 'rgba(139,92,246,0.35)'}
+                                         onMouseOut={e => e.currentTarget.style.background = 'rgba(139,92,246,0.2)'}
+                                      >
+                                         {isLink ? <ExternalLink size={12} /> : <Download size={12} />}
+                                         {isLink ? 'Open Link' : 'View / Download'}
+                                      </a>
+                                   </div>
+                                );
+                             })}
+                          </div>
+                       )}
+                    </div>
 
                    {/* Open Text Area */}
                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '32px', padding: '2.5rem 3rem', display: 'flex', flexDirection: 'column', position: 'relative' }}>

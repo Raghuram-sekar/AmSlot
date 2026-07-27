@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import {
    CalendarDays, Users, CheckCircle2, Lock, ArrowRight, Hourglass, UserPlus,
    Clock, ArrowLeft, ChevronRight, Hash, LogOut, XOctagon, ListOrdered,
-   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil, History
+   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil, History,
+   FileText, UploadCloud, Link as LinkIcon, Trash2, ExternalLink, FileCode, Paperclip, Download
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
@@ -127,6 +128,13 @@ export default function StudentPortal() {
    // Custom confirm modal
    const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+   // Document Submissions & Upload Review Documents
+   const [submissionFiles, setSubmissionFiles] = useState<any[]>([]);
+   const [uploadingFile, setUploadingFile] = useState(false);
+   const [showLinkModal, setShowLinkModal] = useState(false);
+   const [linkTitleInput, setLinkTitleInput] = useState('');
+   const [linkUrlInput, setLinkUrlInput] = useState('');
 
    // ─── Handlers ───────────────────────────────────────────────────────────────
 
@@ -340,6 +348,122 @@ export default function StudentPortal() {
       setCodeCopied(true);
       showToast("Invite code copied!", "success");
       setTimeout(() => setCodeCopied(false), 2000);
+   };
+
+   // ─── Submission File Handlers ────────────────────────────────────────────────
+
+   const fetchSubmissionFiles = async (slotId: string) => {
+      if (!slotId) return;
+      const { data } = await supabase
+         .from('submission_files')
+         .select('*')
+         .eq('slot_id', slotId)
+         .order('created_at', { ascending: false });
+      if (data) setSubmissionFiles(data);
+   };
+
+   useEffect(() => {
+      const bookedSlot = myGroup ? slots.find(s => s.group_id === myGroup.id) : null;
+      if (bookedSlot?.id) {
+         fetchSubmissionFiles(bookedSlot.id);
+         const channel = supabase.channel(`realtime_submission_files_${bookedSlot.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'submission_files', filter: `slot_id=eq.${bookedSlot.id}` }, () => {
+               fetchSubmissionFiles(bookedSlot.id);
+            })
+            .subscribe();
+         return () => { supabase.removeChannel(channel); };
+      } else {
+         setSubmissionFiles([]);
+      }
+   }, [myGroup?.id, slots]);
+
+   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      const bookedSlot = myGroup ? slots.find(s => s.group_id === myGroup.id) : null;
+      if (!file || !bookedSlot || !myGroup || !user) return;
+
+      if (file.size > 10 * 1024 * 1024) {
+         showToast("File size exceeds 10MB limit. Please upload a smaller file or zip.", "error");
+         return;
+      }
+
+      setUploadingFile(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+         const base64Url = reader.result as string;
+         
+         let fileTypeCategory = 'doc';
+         const ext = file.name.split('.').pop()?.toLowerCase() || '';
+         if (['pdf'].includes(ext)) fileTypeCategory = 'pdf';
+         else if (['ipynb'].includes(ext)) fileTypeCategory = 'ipynb';
+         else if (['py', 'cpp', 'c', 'java', 'js', 'ts', 'html', 'css', 'json', 'md', 'txt'].includes(ext)) fileTypeCategory = 'code';
+         else if (['zip', 'rar', 'tar', 'gz', '7z'].includes(ext)) fileTypeCategory = 'archive';
+         else if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) fileTypeCategory = 'doc';
+
+         const fileSizeStr = file.size > 1024 * 1024 
+            ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+            : (file.size / 1024).toFixed(0) + ' KB';
+
+         const { data, error } = await supabase.from('submission_files').insert([{
+            slot_id: bookedSlot.id,
+            group_id: myGroup.id,
+            uploaded_by: user.id,
+            file_name: file.name,
+            file_url: base64Url,
+            file_type: fileTypeCategory,
+            file_size: fileSizeStr
+         }]).select().single();
+
+         if (error) {
+            showToast("Error uploading file: " + error.message, "error");
+         } else if (data) {
+            setSubmissionFiles(prev => [data, ...prev]);
+            showToast(`Attached ${file.name}!`, "success");
+         }
+         setUploadingFile(false);
+         e.target.value = '';
+      };
+      reader.readAsDataURL(file);
+   };
+
+   const handleAttachLink = async () => {
+      const bookedSlot = myGroup ? slots.find(s => s.group_id === myGroup.id) : null;
+      if (!linkTitleInput.trim() || !linkUrlInput.trim() || !bookedSlot || !myGroup || !user) return;
+
+      let formattedUrl = linkUrlInput.trim();
+      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+         formattedUrl = 'https://' + formattedUrl;
+      }
+
+      const { data, error } = await supabase.from('submission_files').insert([{
+         slot_id: bookedSlot.id,
+         group_id: myGroup.id,
+         uploaded_by: user.id,
+         file_name: linkTitleInput.trim(),
+         file_url: formattedUrl,
+         file_type: 'link',
+         file_size: 'URL'
+      }]).select().single();
+
+      if (error) {
+         showToast("Error attaching link: " + error.message, "error");
+      } else if (data) {
+         setSubmissionFiles(prev => [data, ...prev]);
+         showToast("Repository link attached!", "success");
+         setLinkTitleInput('');
+         setLinkUrlInput('');
+         setShowLinkModal(false);
+      }
+   };
+
+   const handleDeleteSubmissionFile = async (fileId: string) => {
+      const { error } = await supabase.from('submission_files').delete().eq('id', fileId);
+      if (!error) {
+         setSubmissionFiles(prev => prev.filter(f => f.id !== fileId));
+         showToast("File removed.", "info");
+      } else {
+         showToast("Error removing file: " + error.message, "error");
+      }
    };
 
    // ─── Auth / Data Loading ─────────────────────────────────────────────────────
@@ -1624,9 +1748,46 @@ export default function StudentPortal() {
                          {confirmModal.confirmLabel || 'Confirm'}
                       </button>
                    </div>
+                 </div>
+              </div>
+           )}
+
+          {/* =========================================================
+              ADD REPOSITORY / DEMO LINK MODAL
+              ========================================================= */}
+          {showLinkModal && (
+             <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: '2rem' }}>
+                <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 25, 0.98))', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '32px', width: '100%', maxWidth: '440px', padding: '2.5rem', position: 'relative', boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                      <div>
+                         <div style={{ fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>Upload Review Documents</div>
+                         <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)' }}>Add Repository Link</h2>
+                      </div>
+                      <button onClick={() => setShowLinkModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '10px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}><X size={16} /></button>
+                   </div>
+
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                      <div>
+                         <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: '0.4rem' }}>Link Title (e.g. GitHub Repository, Live Demo)</label>
+                         <input type="text" value={linkTitleInput} onChange={e => setLinkTitleInput(e.target.value)} placeholder="GitHub Repository"
+                            style={{ width: '100%', padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '0.95rem', fontWeight: 700 }}
+                         />
+                      </div>
+
+                      <div>
+                         <label style={{ display: 'block', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: '0.4rem' }}>URL Address</label>
+                         <input type="url" value={linkUrlInput} onChange={e => setLinkUrlInput(e.target.value)} placeholder="https://github.com/user/project"
+                            style={{ width: '100%', padding: '0.875rem 1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px', color: '#fff', outline: 'none', fontSize: '0.95rem', fontWeight: 700 }}
+                         />
+                      </div>
+                   </div>
+
+                   <button onClick={handleAttachLink} disabled={!linkTitleInput.trim() || !linkUrlInput.trim()}
+                      style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '1rem', cursor: !linkTitleInput.trim() || !linkUrlInput.trim() ? 'not-allowed' : 'pointer', opacity: !linkTitleInput.trim() || !linkUrlInput.trim() ? 0.5 : 1, boxShadow: '0 8px 20px rgba(139,92,246,0.3)' }}
+                   >Attach Repository Link</button>
                 </div>
              </div>
           )}
-      </div>
-   );
-}
+       </div>
+    );
+ }

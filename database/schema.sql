@@ -206,6 +206,20 @@ CREATE TABLE public.waitlist_entries (
   UNIQUE(project_id, group_id) -- A group can only be on a project's waitlist once
 );
 
+-- 11b. Submission Files (Upload Review Documents)
+DROP TABLE IF EXISTS public.submission_files CASCADE;
+CREATE TABLE public.submission_files (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  slot_id UUID REFERENCES public.slots(id) ON DELETE CASCADE,
+  group_id UUID REFERENCES public.groups(id) ON DELETE CASCADE,
+  uploaded_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  file_name TEXT NOT NULL,
+  file_url TEXT NOT NULL,
+  file_type TEXT NOT NULL, -- 'pdf', 'ipynb', 'code', 'doc', 'archive', 'link'
+  file_size TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- 12. Realtime WebSocket Broadcasting
 -- This tells Supabase to push changes from these tables to listening React clients
 BEGIN;
@@ -214,6 +228,7 @@ BEGIN;
 COMMIT;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.slots;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.waitlist_entries;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.submission_files;
 
 -- 13. Row Level Security (RLS) Policies
 -- Hardening the database for production readiness.
@@ -400,6 +415,13 @@ CREATE POLICY "Professors manage waitlist" ON public.waitlist_entries FOR ALL US
 CREATE POLICY "Groups manage own waitlist" ON public.waitlist_entries FOR ALL USING (
   EXISTS (SELECT 1 FROM public.group_members WHERE group_id = public.waitlist_entries.group_id AND student_id = auth.uid())
 );
+
+-- submission_files: Students view & upload for their group, professors manage all
+ALTER TABLE public.submission_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view submission files" ON public.submission_files FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Students can insert submission files" ON public.submission_files FOR INSERT TO authenticated WITH CHECK (auth.uid() = uploaded_by);
+CREATE POLICY "Students can delete submission files" ON public.submission_files FOR DELETE TO authenticated USING (auth.uid() = uploaded_by OR EXISTS (SELECT 1 FROM public.groups g WHERE g.id = group_id AND g.leader_id = auth.uid()));
+CREATE POLICY "Professors manage submission files" ON public.submission_files FOR ALL TO authenticated USING (true);
 
 -- =========================================================================
 -- 12. TRIGGERS & FUNCTIONS
