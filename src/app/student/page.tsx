@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
    CalendarDays, Users, CheckCircle2, Lock, ArrowRight, Hourglass, UserPlus,
    Clock, ArrowLeft, ChevronRight, Hash, LogOut, XOctagon, ListOrdered,
-   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil
+   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil, History
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
@@ -1336,25 +1336,35 @@ export default function StudentPortal() {
                                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Select Day</div>
                                  <div className="date-strip">
                                  {events.map((ev) => {
-                                    const d = new Date(ev.date + 'T00:00:00');
-                                    const isActive = activeDate === ev.date;
-                                    const slotsOnDay = slots.filter(s => events.find(e => e.id === s.event_id)?.date === ev.date);
-                                    const availableCount = slotsOnDay.filter(s => s.status === 'AVAILABLE').length;
-                                    return (
-                                       <button key={ev.id} onClick={() => { setActiveDate(ev.date); setSelectedSlot(null); }}
-                                          style={{ padding: '0.875rem 1.25rem', borderRadius: '14px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isActive ? 'transparent' : 'rgba(255,255,255,0.06)'}`, boxShadow: isActive ? '0 8px 20px rgba(139,92,246,0.3)' : 'none', transform: isActive ? 'scale(1.04)' : 'scale(1)', minWidth: '80px' }}
-                                       >
-                                          <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)', marginBottom: '0.3rem' }}>
-                                             {d.toLocaleDateString('en-US', { weekday: 'short' })}
-                                          </div>
-                                          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', lineHeight: 1, fontFamily: 'var(--font-outfit)' }}>{d.getDate()}</div>
-                                          <div style={{ fontSize: '0.65rem', color: isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)', marginTop: '0.3rem' }}>{d.toLocaleDateString('en-US', { month: 'short' })}</div>
-                                          {availableCount > 0 && (
-                                             <div style={{ marginTop: '0.5rem', background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(52,211,153,0.15)', borderRadius: '6px', padding: '0.2rem 0.4rem', fontSize: '0.65rem', color: isActive ? '#fff' : '#34d399', fontWeight: 800 }}>{availableCount} open</div>
-                                          )}
-                                       </button>
-                                    );
-                                 })}
+                                     const d = new Date(ev.date + 'T00:00:00');
+                                     const isActive = activeDate === ev.date;
+                                     const todayStr = new Date().toISOString().split('T')[0];
+                                     const isPast = ev.date < todayStr;
+                                     const slotsOnDay = slots.filter(s => events.find(e => e.id === s.event_id)?.date === ev.date);
+                                     const availableCount = slotsOnDay.filter(s => s.status === 'AVAILABLE').length;
+                                     return (
+                                        <button key={ev.id} onClick={() => { setActiveDate(ev.date); setSelectedSlot(null); }}
+                                           style={{
+                                              padding: '0.875rem 1.25rem', borderRadius: '16px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s',
+                                              background: isActive ? (isPast ? 'linear-gradient(135deg, #d97706, #b45309)' : 'linear-gradient(135deg, var(--primary), #6d28d9)') : (isPast ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.03)'),
+                                              border: `1px solid ${isActive ? 'transparent' : isPast ? 'rgba(251,191,36,0.18)' : 'rgba(255,255,255,0.06)'}`,
+                                              boxShadow: isActive ? (isPast ? '0 8px 20px rgba(217,119,6,0.35)' : '0 8px 20px rgba(139,92,246,0.35)') : 'none',
+                                              transform: isActive ? 'scale(1.04)' : 'scale(1)', minWidth: '85px'
+                                           }}
+                                        >
+                                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.8)' : isPast ? '#fbbf24' : 'rgba(255,255,255,0.3)', marginBottom: '0.3rem' }}>
+                                              {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                                           </div>
+                                           <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', lineHeight: 1, fontFamily: 'var(--font-outfit)' }}>{d.getDate()}</div>
+                                           <div style={{ fontSize: '0.65rem', color: isActive ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)', marginTop: '0.3rem' }}>{d.toLocaleDateString('en-US', { month: 'short' })}</div>
+                                           {isPast ? (
+                                              <div style={{ marginTop: '0.5rem', background: isActive ? 'rgba(0,0,0,0.25)' : 'rgba(251,191,36,0.12)', borderRadius: '6px', padding: '0.2rem 0.4rem', fontSize: '0.62rem', color: isActive ? '#fff' : '#fbbf24', fontWeight: 800 }}>Passed</div>
+                                           ) : availableCount > 0 ? (
+                                              <div style={{ marginTop: '0.5rem', background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(52,211,153,0.15)', borderRadius: '6px', padding: '0.2rem 0.4rem', fontSize: '0.65rem', color: isActive ? '#fff' : '#34d399', fontWeight: 800 }}>{availableCount} open</div>
+                                           ) : null}
+                                        </button>
+                                     );
+                                  })}
                                  </div>
                               </div>
 
@@ -1378,8 +1388,46 @@ export default function StudentPortal() {
                                        return (
                                           <>
                                              {isPastDate && (
-                                                <div style={{ background: 'rgba(251, 191, 36, 0.08)', border: '1px solid rgba(251, 191, 36, 0.2)', borderRadius: '12px', padding: '0.75rem 1rem', color: '#fbbf24', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                                   <Clock size={14} /> This review date has passed. Slots for past dates cannot be locked.
+                                                <div className="animate-fade-in" style={{
+                                                   background: 'linear-gradient(135deg, rgba(251,191,36,0.1), rgba(245,158,11,0.03))',
+                                                   border: '1px solid rgba(251,191,36,0.28)',
+                                                   borderLeft: '4px solid #fbbf24',
+                                                   borderRadius: '18px',
+                                                   padding: '1.25rem 1.5rem',
+                                                   marginBottom: '1.25rem',
+                                                   backdropFilter: 'blur(16px)',
+                                                   boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
+                                                   display: 'flex',
+                                                   alignItems: 'center',
+                                                   gap: '1.25rem'
+                                                }}>
+                                                   <div style={{
+                                                      background: 'rgba(251,191,36,0.15)',
+                                                      border: '1px solid rgba(251,191,36,0.3)',
+                                                      width: '46px', height: '46px',
+                                                      borderRadius: '16px',
+                                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                      color: '#fbbf24', flexShrink: 0,
+                                                      boxShadow: '0 0 20px rgba(251,191,36,0.2)'
+                                                   }}>
+                                                      <History size={24} />
+                                                   </div>
+                                                   <div style={{ flex: 1 }}>
+                                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
+                                                         <span style={{ fontSize: '0.65rem', color: '#fbbf24', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.14em', background: 'rgba(251,191,36,0.15)', padding: '0.2rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(251,191,36,0.25)' }}>
+                                                            Past Review Milestone
+                                                         </span>
+                                                         <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>
+                                                            {new Date(activeDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                                                         </span>
+                                                      </div>
+                                                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>
+                                                         This review date has passed. Slot locking and changes for past dates are archived.
+                                                      </div>
+                                                      <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '0.25rem', fontWeight: 500 }}>
+                                                         Select an active upcoming date from the calendar strip on the left to lock a new review slot.
+                                                      </div>
+                                                   </div>
                                                 </div>
                                              )}
                                              {filteredSlots.length === 0 && (
@@ -1396,7 +1444,7 @@ export default function StudentPortal() {
                                                 let leftBorder = 'rgba(255,255,255,0.06)';
                                                 let bg = 'rgba(255,255,255,0.02)';
                                                 if (isBookedByOthers) { leftBorder = 'rgba(244,63,94,0.4)'; bg = 'rgba(244,63,94,0.03)'; }
-                                                else if (isPastDate) { leftBorder = 'rgba(255,255,255,0.1)'; bg = 'rgba(255,255,255,0.01)'; }
+                                                else if (isPastDate) { leftBorder = 'rgba(251,191,36,0.2)'; bg = 'rgba(251,191,36,0.02)'; }
                                                 else if (isSelected) { leftBorder = 'var(--primary)'; bg = 'rgba(139,92,246,0.08)'; }
                                                 else if (isAvailable && !isSelected) { leftBorder = 'rgba(52,211,153,0.3)'; }
 
@@ -1434,8 +1482,8 @@ export default function StudentPortal() {
                                                             <Lock size={10} /> Taken
                                                          </div>
                                                       ) : isPastDate ? (
-                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                            Expired
+                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#fbbf24', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                            <History size={10} /> Archived
                                                          </div>
                                                       ) : isSelected ? (
                                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#c4b5fd', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
