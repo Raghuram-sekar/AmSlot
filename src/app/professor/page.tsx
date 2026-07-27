@@ -114,6 +114,7 @@ export default function ProfessorDashboard() {
   const [manageSaving, setManageSaving] = useState(false);
   const [professorSlotFiles, setProfessorSlotFiles] = useState<any[]>([]);
   const [fetchingSlotFiles, setFetchingSlotFiles] = useState(false);
+  const [previewFile, setPreviewFile] = useState<any | null>(null);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
   const [waitlistEntries, setWaitlistEntries] = useState<any[]>([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
@@ -2298,44 +2299,48 @@ const CourseSkeleton = () => (
                       </div>
                    </div>
 
-                    {/* Student Uploaded Review Documents */}
-                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1.25rem 1.5rem' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                    {/* Student Uploaded Review Documents - Pattern 1 Badge Strip */}
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1rem 1.25rem' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                             <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
-                                <FileText size={14} />
+                             <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '26px', height: '26px', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
+                                <FileText size={13} />
                              </div>
-                             <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Upload Review Documents ({professorSlotFiles.length})</h3>
+                             <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Review Deliverables ({professorSlotFiles.length})</h3>
                           </div>
-                          {fetchingSlotFiles && <Hourglass className="animate-spin" size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                          {fetchingSlotFiles && <Hourglass className="animate-spin" size={13} style={{ color: 'rgba(255,255,255,0.4)' }} />}
                        </div>
 
                        {professorSlotFiles.length === 0 ? (
-                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '0.35rem 0' }}>No submission documents uploaded by squad yet.</div>
+                          <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '0.2rem 0' }}>No submission documents attached by squad yet.</div>
                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '160px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
                              {professorSlotFiles.map(file => {
                                 const isLink = file.file_type === 'link';
+                                const isPdf = file.file_type === 'pdf';
+                                const isCode = file.file_type === 'code' || file.file_type === 'ipynb';
+                                const iconColor = isLink ? '#34d399' : isPdf ? '#fbbf24' : isCode ? '#c4b5fd' : '#60a5fa';
+                                const iconBg = isLink ? 'rgba(52,211,153,0.12)' : isPdf ? 'rgba(251,191,36,0.12)' : isCode ? 'rgba(139,92,246,0.12)' : 'rgba(96,165,250,0.12)';
+
                                 return (
-                                   <div key={file.id} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.6rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflow: 'hidden' }}>
-                                         <div style={{ color: isLink ? '#34d399' : '#c4b5fd', flexShrink: 0 }}>
-                                            {isLink ? <LinkIcon size={16} /> : <FileText size={16} />}
-                                         </div>
-                                         <div style={{ overflow: 'hidden' }}>
-                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
-                                            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>{file.file_size}</span>
-                                         </div>
+                                   <button 
+                                      key={file.id} 
+                                      onClick={() => setPreviewFile(file)}
+                                      style={{ 
+                                         display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.45rem 0.85rem', borderRadius: '12px',
+                                         background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
+                                         transition: 'all 0.2s', color: '#fff', fontSize: '0.8rem', fontWeight: 800
+                                      }}
+                                      onMouseOver={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.15)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                      onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                   >
+                                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
+                                         {isLink ? <LinkIcon size={12} /> : <FileText size={12} />}
                                       </div>
-                                      <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
-                                         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.35)', color: '#c4b5fd', fontSize: '0.75rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s', flexShrink: 0 }}
-                                         onMouseOver={e => e.currentTarget.style.background = 'rgba(139,92,246,0.3)'}
-                                         onMouseOut={e => e.currentTarget.style.background = 'rgba(139,92,246,0.18)'}
-                                      >
-                                         {isLink ? <ExternalLink size={12} /> : <Download size={12} />}
-                                         {isLink ? 'Open Link' : 'View / Download'}
-                                      </a>
-                                   </div>
+                                      <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</span>
+                                      <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', fontWeight: 700, padding: '0.1rem 0.35rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>{file.file_size}</span>
+                                      <Eye size={13} style={{ color: 'rgba(255,255,255,0.4)', marginLeft: '0.1rem' }} />
+                                   </button>
                                 );
                              })}
                           </div>
@@ -2364,6 +2369,63 @@ const CourseSkeleton = () => (
 
           </div>
         </div>
+       )}
+
+       {/* =========================================================
+           DELIVERABLES INSPECTION DRAWER / PREVIEWER MODAL
+           ========================================================= */}
+       {previewFile && (
+         <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,10,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500, padding: '1.5rem' }}>
+           <div className="animate-scale-in" style={{ background: 'linear-gradient(145deg, rgba(22, 22, 34, 0.98), rgba(14, 14, 22, 0.99))', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '28px', width: '100%', maxWidth: '580px', padding: '2rem 2.25rem', position: 'relative', boxShadow: '0 30px 80px rgba(0,0,0,0.7), 0 0 50px rgba(139,92,246,0.15)' }}>
+             
+             {/* Header */}
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                   <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: previewFile.file_type === 'link' ? 'rgba(52,211,153,0.15)' : 'rgba(139,92,246,0.15)', border: previewFile.file_type === 'link' ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(139,92,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: previewFile.file_type === 'link' ? '#34d399' : '#c4b5fd' }}>
+                      {previewFile.file_type === 'link' ? <LinkIcon size={20} /> : <FileText size={20} />}
+                   </div>
+                   <div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.15rem' }}>Review Deliverable</div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)', maxWidth: '360px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{previewFile.file_name}</h2>
+                   </div>
+                </div>
+
+                <button onClick={() => setPreviewFile(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                   <X size={18} />
+                </button>
+             </div>
+
+             {/* Deliverable Details Grid */}
+             <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '18px', padding: '1.25rem', marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                   <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.2rem' }}>Type & Format</div>
+                   <div style={{ fontSize: '0.88rem', fontWeight: 800, color: previewFile.file_type === 'link' ? '#34d399' : '#c4b5fd', textTransform: 'uppercase' }}>{previewFile.file_type}</div>
+                </div>
+
+                <div>
+                   <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.2rem' }}>Size / Spec</div>
+                   <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>{previewFile.file_size || 'N/A'}</div>
+                </div>
+             </div>
+
+             {/* Action Bar */}
+             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'flex-end' }}>
+                <button onClick={() => { navigator.clipboard.writeText(previewFile.file_url); showToast("Link copied to clipboard!", "success"); }}
+                   style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                   <Copy size={14} /> Copy Link
+                </button>
+
+                <a href={previewFile.file_url} target="_blank" rel="noopener noreferrer" download={previewFile.file_type !== 'link' ? previewFile.file_name : undefined}
+                   style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', fontSize: '0.85rem', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 8px 20px rgba(139,92,246,0.3)' }}
+                >
+                   {previewFile.file_type === 'link' ? <ExternalLink size={14} /> : <Download size={14} />}
+                   {previewFile.file_type === 'link' ? 'Open URL in New Tab' : 'View & Download File'}
+                </a>
+             </div>
+
+           </div>
+         </div>
        )}
  
        {/* =========================================================
