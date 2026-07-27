@@ -479,49 +479,9 @@ export default function AuthPage() {
               </button>
             </form>
 
-            <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-              <span style={{ padding: '0 1rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>OR</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-              <button 
-                onClick={handleMicrosoftAuth}
-                style={{ 
-                  width: '100%', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.06)', color: '#fff', 
-                  borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                  gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-                  transition: 'all 0.2s', border: '1px solid rgba(255,255,255,0.12)'
-                }}
-                onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.12)'}
-                onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
-                disabled={loading}
-              >
-                <MicrosoftIcon />
-                Sign in with Amrita Email (Microsoft M365)
-              </button>
-
-              <button 
-                onClick={handleGoogleAuth}
-                style={{ 
-                  width: '100%', padding: '0.875rem 1rem', background: '#fff', color: '#000', 
-                  borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                  gap: '0.75rem', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-                  transition: 'transform 0.2s', border: 'none'
-                }}
-                onMouseOver={e=>e.currentTarget.style.transform='scale(1.01)'}
-                onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}
-                disabled={loading}
-              >
-                <GoogleIcon />
-                Continue with Google
-              </button>
-            </div>
-
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>
-                 AmSlot v2.0.0 • Amrita Verified SSO
+                 AmSlot v2.0.0 • Amrita Verified Identity
               </div>
               <button 
                 onClick={() => { setIsLogin(!isLogin); setError(null); }}
