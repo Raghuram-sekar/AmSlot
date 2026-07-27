@@ -317,9 +317,20 @@ export default function AuthPage() {
 
       <div className="glass-panel animate-fade-in-up" style={{ width: '100%', maxWidth: '450px', padding: '3rem 2.5rem', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2.5rem' }}>
-          <div className="creative-logo" style={{ width: '48px', height: '48px', marginBottom: '1rem' }}>
-            <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
-            <div className="logo-core" style={{ borderRadius: '8px' }}><Hourglass size={16} color="#fff" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
+            <div className="creative-logo" style={{ width: '40px', height: '40px' }}>
+              <div className="ring ring-1" style={{ borderTopColor: 'var(--primary)' }}></div>
+              <div className="logo-core" style={{ borderRadius: '8px' }}><Hourglass size={16} color="#fff" /></div>
+            </div>
+            <span style={{ 
+              display: 'inline-flex', alignItems: 'center', gap: '0.35rem', 
+              padding: '0.2rem 0.6rem', background: 'rgba(139, 92, 246, 0.15)', 
+              border: '1px solid rgba(139, 92, 246, 0.35)', borderRadius: '9999px', 
+              fontSize: '0.75rem', fontWeight: 800, color: '#a78bfa', letterSpacing: '0.04em' 
+            }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span>
+              v2.0.0
+            </span>
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>
             {otpStep ? 'Verify Amrita Email' : isLogin ? 'Welcome Back' : 'Create Account'}

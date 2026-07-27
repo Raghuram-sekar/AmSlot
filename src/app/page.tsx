@@ -17,6 +17,16 @@ const Logo = () => (
     <span style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.04em', fontFamily: 'var(--font-outfit)', color: '#fff'}}>
       Am<span style={{ color: '#a78bfa' }}>Slot</span>
     </span>
+    <span style={{ 
+      display: 'inline-flex', alignItems: 'center', gap: '0.35rem', 
+      padding: '0.2rem 0.55rem', background: 'rgba(139, 92, 246, 0.15)', 
+      border: '1px solid rgba(139, 92, 246, 0.35)', borderRadius: '9999px', 
+      fontSize: '0.7rem', fontWeight: 800, color: '#a78bfa', letterSpacing: '0.04em',
+      marginLeft: '0.2rem'
+    }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span>
+      v2.0.0
+    </span>
   </div>
 );
 
