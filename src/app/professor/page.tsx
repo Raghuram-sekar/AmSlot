@@ -2313,7 +2313,7 @@ const CourseSkeleton = () => (
                        {professorSlotFiles.length === 0 ? (
                           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '0.35rem 0' }}>No submission documents uploaded by squad yet.</div>
                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '160px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                              {professorSlotFiles.map(file => {
                                 const isLink = file.file_type === 'link';
                                 return (

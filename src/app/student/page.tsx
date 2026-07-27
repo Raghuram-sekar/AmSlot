@@ -383,6 +383,12 @@ export default function StudentPortal() {
       const bookedSlot = myGroup ? slots.find(s => s.group_id === myGroup.id) : null;
       if (!file || !bookedSlot || !myGroup || !user) return;
 
+      if (submissionFiles.length >= 5) {
+         showToast("Submission limit reached (max 5 items per review). Delete an item to add a new one.", "error");
+         e.target.value = '';
+         return;
+      }
+
       if (file.size > 10 * 1024 * 1024) {
          showToast("File size exceeds 10MB limit. Please upload a smaller file or zip.", "error");
          return;
@@ -434,6 +440,11 @@ export default function StudentPortal() {
    const handleAttachLink = async () => {
       const bookedSlot = myGroup ? slots.find(s => s.group_id === myGroup.id) : null;
       if (!linkTitleInput.trim() || !linkUrlInput.trim() || !bookedSlot || !myGroup || !user) return;
+
+      if (submissionFiles.length >= 5) {
+         showToast("Submission limit reached (max 5 items per review). Delete an item to add a new link.", "error");
+         return;
+      }
 
       let formattedUrl = linkUrlInput.trim();
       if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
