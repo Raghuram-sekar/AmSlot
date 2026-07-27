@@ -1615,35 +1615,36 @@ export default function StudentPortal() {
                                           </>
                                        );
                                     })()}
-                                 </div>
-                              </div>
+                                  </div>
 
-                                  {/* Lock Slot CTA */}
+                                  {/* Lock Slot CTA inside Right Column */}
                                   {selectedSlot && myGroup.leader_id === user.id && (() => {
                                      const hasBooking = slots.some(sl => sl.group_id === myGroup.id);
                                      return (
-                                        <div className="animate-scale-in" style={{ marginTop: '2rem', padding: '1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.1), rgba(139,92,246,0.04))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
+                                        <div className="animate-scale-in" style={{ marginTop: '1.25rem', padding: '1.25rem 1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.12), rgba(139,92,246,0.04))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
                                            <div>
                                               <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '0.2rem' }}>{hasBooking ? 'Need to reschedule?' : 'Ready to commit?'}</div>
-                                              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>{hasBooking ? 'Release old slot and book this one' : `Lock in this slot for ${myGroup.name}`}</div>
+                                              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>{hasBooking ? 'Release old slot and book this one' : `Lock in this slot for ${myGroup.name}`}</div>
                                            </div>
                                            <button onClick={handleBookSlot} disabled={bookingLoading}
-                                              style={{ padding: '0.875rem 2rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(139,92,246,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                                              style={{ padding: '0.75rem 1.75rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(139,92,246,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
                                               onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                                               onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                                            >
-                                              {bookingLoading ? <Hourglass size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={16} />}
+                                              {bookingLoading ? <Hourglass size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={15} />}
                                               {bookingLoading ? 'Securing...' : hasBooking ? 'Reschedule Slot' : 'Lock Slot'}
                                            </button>
                                         </div>
                                      );
                                   })()}
+
                                  {selectedSlot && myGroup.leader_id !== user.id && (
                                     <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', background: 'rgba(244,63,94,0.05)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f43f5e', fontSize: '0.85rem', fontWeight: 700 }}>
                                        <Lock size={14} /> Only the group leader can confirm a booking.
                                     </div>
                                  )}
                               </div>
+                           </div>
                         )}
                      </div>
                   )}
