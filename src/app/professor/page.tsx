@@ -2363,32 +2363,49 @@ const CourseSkeleton = () => (
                           {professorSlotFiles.length === 0 ? (
                              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '2rem 0', textAlign: 'center' }}>No submission documents attached by squad yet.</div>
                           ) : (
-                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '220px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '230px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                                 {professorSlotFiles.map(file => {
                                    const isLink = file.file_type === 'link';
+                                   const isPdf = file.file_type === 'pdf';
+                                   const isCode = file.file_type === 'code' || file.file_type === 'ipynb';
+                                   const iconColor = isLink ? '#34d399' : isPdf ? '#fbbf24' : isCode ? '#c4b5fd' : '#60a5fa';
+                                   const iconBg = isLink ? 'rgba(52,211,153,0.12)' : isPdf ? 'rgba(251,191,36,0.12)' : isCode ? 'rgba(139,92,246,0.12)' : 'rgba(96,165,250,0.12)';
+                                   const iconBorder = isLink ? 'rgba(52,211,153,0.3)' : isPdf ? 'rgba(251,191,36,0.3)' : isCode ? 'rgba(139,92,246,0.3)' : 'rgba(96,165,250,0.3)';
+
                                    return (
-                                      <div key={file.id} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: isLink ? 'rgba(52,211,153,0.15)' : 'rgba(139,92,246,0.15)', border: isLink ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(139,92,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isLink ? '#34d399' : '#c4b5fd', flexShrink: 0 }}>
-                                               {isLink ? <LinkIcon size={18} /> : <FileText size={18} />}
+                                      <div key={file.id} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '0.85rem 1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'} onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', overflow: 'hidden' }}>
+                                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: iconBg, border: `1px solid ${iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
+                                               {isLink ? <LinkIcon size={18} /> : isPdf ? <FileText size={18} /> : isCode ? <FileCode size={18} /> : <Paperclip size={18} />}
                                             </div>
                                             <div style={{ overflow: 'hidden' }}>
-                                               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
-                                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                                                  <span style={{ fontSize: '0.7rem', color: isLink ? '#34d399' : '#c4b5fd', fontWeight: 800, textTransform: 'uppercase' }}>{file.file_type}</span>
-                                                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>• {file.file_size}</span>
+                                               <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
+                                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                                                  <span style={{ fontSize: '0.65rem', color: iconColor, fontWeight: 900, textTransform: 'uppercase', padding: '0.1rem 0.4rem', background: iconBg, borderRadius: '5px', border: `1px solid ${iconBorder}` }}>{file.file_type}</span>
+                                                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>• {file.file_size}</span>
                                                </div>
                                             </div>
                                          </div>
 
-                                         <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
-                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(109,40,217,0.35))', border: '1px solid rgba(139,92,246,0.4)', color: '#fff', fontSize: '0.8rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s', flexShrink: 0 }}
-                                            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                                            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-                                         >
-                                            {isLink ? <ExternalLink size={14} /> : <Download size={14} />}
-                                            {isLink ? 'Open Link' : 'View / Download'}
-                                         </a>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                                            <button 
+                                               onClick={() => setPreviewFile(file)}
+                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.85rem', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                                               onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+                                               onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                            >
+                                               <Eye size={13} /> Preview
+                                            </button>
+
+                                            <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
+                                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.95rem', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4))', border: '1px solid rgba(139,92,246,0.4)', color: '#fff', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s' }}
+                                               onMouseOver={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                               onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                            >
+                                               {isLink ? <ExternalLink size={13} /> : <Download size={13} />}
+                                               {isLink ? 'Open Link' : 'Download'}
+                                            </a>
+                                         </div>
                                       </div>
                                    );
                                 })}
