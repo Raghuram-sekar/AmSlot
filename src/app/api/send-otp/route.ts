@@ -33,57 +33,25 @@ export async function POST(req: Request) {
       </div>
     `;
 
-    // 1. Try sending via Resend API
-    const resendApiKey = process.env.RESEND_API_KEY || 're_YCCgWjwY_DcVDyJZ5G35zWd2wEwQ1C6zX';
+    const user = process.env.GMAIL_USER || 'raghuramspace@gmail.com';
+    const pass = process.env.GMAIL_APP_PASSWORD || 'kurfcpuobghapyfr';
 
-    try {
-      const resendResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'AmSlot Platform <onboarding@resend.dev>',
-          to: [email],
-          subject: `AmSlot Verification Code: ${otp}`,
-          html: emailHtml
-        })
-      });
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user,
+        pass,
+      },
+    });
 
-      const resendData = await resendResponse.json();
-      if (resendResponse.ok) {
-        return NextResponse.json({ success: true, id: resendData.id, engine: 'resend' });
-      }
-      console.warn('Resend notice:', resendData);
-    } catch (e) {
-      console.warn('Resend exception:', e);
-    }
+    await transporter.sendMail({
+      from: `"AmSlot Verification" <${user}>`,
+      to: email,
+      subject: `AmSlot Verification Code: ${otp}`,
+      html: emailHtml,
+    });
 
-    // 2. Fallback: Try sending via Nodemailer if SMTP env vars exist
-    const smtpUser = process.env.GMAIL_USER || 'raghuramspace@gmail.com';
-    const smtpPass = process.env.GMAIL_APP_PASSWORD;
-
-    if (smtpPass) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
-
-      await transporter.sendMail({
-        from: '"AmSlot Platform" <' + smtpUser + '>',
-        to: email,
-        subject: `AmSlot Verification Code: ${otp}`,
-        html: emailHtml,
-      });
-
-      return NextResponse.json({ success: true, engine: 'gmail' });
-    }
-
-    return NextResponse.json({ success: true, engine: 'dispatch' });
+    return NextResponse.json({ success: true, engine: 'gmail-direct' });
   } catch (error: any) {
     console.error('Send OTP Error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
