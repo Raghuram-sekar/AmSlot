@@ -139,6 +139,63 @@ BEGIN
 END;
 $$;
 
+-- 10b. Helper RPC function to release a booked slot
+CREATE OR REPLACE FUNCTION public.release_slot(p_group_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.slots 
+  SET group_id = NULL, status = 'AVAILABLE'
+  WHERE group_id = p_group_id;
+
+  RETURN TRUE;
+END;
+$$;
+
+-- 10c. Helper RPC function to leave a squad safely
+CREATE OR REPLACE FUNCTION public.leave_group(p_group_id UUID, p_student_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_remaining_count INT;
+  v_next_leader UUID;
+BEGIN
+  -- 1) Delete member from group
+  DELETE FROM public.group_members 
+  WHERE group_id = p_group_id AND student_id = p_student_id;
+
+  -- 2) Count remaining members
+  SELECT COUNT(*) INTO v_remaining_count 
+  FROM public.group_members 
+  WHERE group_id = p_group_id;
+
+  -- 3) If no members left, release any slots and delete group
+  IF v_remaining_count = 0 THEN
+    UPDATE public.slots 
+    SET group_id = NULL, status = 'AVAILABLE' 
+    WHERE group_id = p_group_id;
+
+    DELETE FROM public.groups WHERE id = p_group_id;
+  ELSE
+    -- 4) If leaving member was leader, reassign leader to another member
+    SELECT student_id INTO v_next_leader 
+    FROM public.group_members 
+    WHERE group_id = p_group_id 
+    LIMIT 1;
+
+    UPDATE public.groups 
+    SET leader_id = v_next_leader 
+    WHERE id = p_group_id AND leader_id = p_student_id;
+  END IF;
+
+  RETURN TRUE;
+END;
+$$;
+
 -- 11. Waitlist Engine
 DROP TABLE IF EXISTS public.waitlist_entries CASCADE;
 CREATE TABLE public.waitlist_entries (

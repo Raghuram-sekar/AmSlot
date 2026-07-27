@@ -206,109 +206,133 @@ export default function StudentPortal() {
       setGroupLoading(false);
    };
 
-    const handleLeaveGroup = async () => {
+     const handleLeaveGroup = async () => {
+        if (!myGroup || !user) return;
+        setConfirmModal({
+           isOpen: true,
+           title: "Withdraw Squad",
+           message: "Are you sure you want to leave this squad? If your squad has locked a slot, it will be automatically released.",
+           confirmLabel: "Leave Squad",
+           danger: true,
+           onConfirm: async () => {
+              // 1. Try RPC leave_group first
+              let { error: rpcErr } = await supabase.rpc('leave_group', { p_group_id: myGroup.id, p_student_id: user.id });
+              if (!rpcErr) {
+                 setMyGroup(null);
+                 setMyGroupMembers([]);
+                 setSelectedSlot(null);
+                 if (activeCourseId) reloadGroupData(activeCourseId);
+                 reloadSlots();
+                 showToast("You have left the squad.", "info");
+                 setConfirmModal(null);
+                 return;
+              }
+
+              // 2. Client-side sequence fallback: always release slot FIRST while user is still member/leader
+              const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', myGroup.id);
+              const isLastMember = count === 1;
+
+              await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', myGroup.id);
+
+              const { error } = await supabase.from('group_members').delete().eq('group_id', myGroup.id).eq('student_id', user.id);
+              if (!error) {
+                 if (isLastMember) {
+                    await supabase.from('groups').delete().eq('id', myGroup.id);
+                 } else if (myGroup.leader_id === user.id) {
+                    const { data: nextMember } = await supabase.from('group_members').select('student_id').eq('group_id', myGroup.id).limit(1).maybeSingle();
+                    if (nextMember) {
+                       await supabase.from('groups').update({ leader_id: nextMember.student_id }).eq('id', myGroup.id);
+                    }
+                 }
+                 setMyGroup(null);
+                 setMyGroupMembers([]);
+                 setSelectedSlot(null);
+                 if (activeCourseId) reloadGroupData(activeCourseId);
+                 reloadSlots();
+                 showToast("You have successfully withdrawn from the squad.", "info");
+              } else {
+                 showToast("Error withdrawing from squad: " + error.message, "error");
+              }
+              setConfirmModal(null);
+           }
+        });
+     };
+
+     const handleRenameGroup = async () => {
+        if (!tempGroupName.trim() || tempGroupName.trim() === myGroup.name) {
+           setIsRenamingGroup(false);
+           return;
+        }
+        const newName = tempGroupName.trim();
+        const { error } = await supabase
+           .from('groups')
+           .update({ name: newName })
+           .eq('id', myGroup.id);
+        
+        if (error) {
+           showToast("Error renaming group: " + error.message, "error");
+        } else {
+           setMyGroup((prev: any) => prev ? { ...prev, name: newName } : null);
+           showToast("Group renamed successfully!", "success");
+        }
+        setIsRenamingGroup(false);
+     };
+
+     const handleSaveProfile = async () => {
+        if (!user || !editNameInput.trim()) return;
+        setEditProfileSaving(true);
+        
+        let rollToSave = editRollInput.trim().toUpperCase();
+        if (rollToSave.startsWith('U4')) {
+           rollToSave = 'CB.SC.' + rollToSave;
+        }
+        
+        const { error } = await supabase
+           .from('users')
+           .update({
+              full_name: editNameInput.trim(),
+              roll_number: rollToSave
+           })
+           .eq('id', user.id);
+
+        if (!error) {
+           setProfile((prev: any) => ({ ...prev, full_name: editNameInput.trim(), roll_number: rollToSave }));
+           showToast("Profile updated successfully!", "success");
+           setEditProfileOpen(false);
+        } else {
+           showToast("Error updating profile: " + error.message, "error");
+        }
+        setEditProfileSaving(false);
+     };
+
+    const handleCancelBooking = async () => {
+       const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
+       if (!myCurrentBooking || !myGroup) return;
        setConfirmModal({
           isOpen: true,
-          title: "Leave Group",
-          message: "Are you sure you want to leave this group? If your group has booked a slot, it will be cancelled.",
-          confirmLabel: "Leave Group",
-          danger: true,
+          title: "Reschedule / Release Slot",
+          message: "Releasing this slot will allow your squad to pick a new review date & time. Are you sure you want to proceed?",
+          confirmLabel: "Release Slot",
+          danger: false,
           onConfirm: async () => {
-             const { error } = await supabase.from('group_members').delete().eq('group_id', myGroup.id).eq('student_id', user.id);
+             // 1. Try RPC release_slot first
+             let { error } = await supabase.rpc('release_slot', { p_group_id: myGroup.id });
+             if (error) {
+                // 2. Client-side fallback
+                const res = await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('id', myCurrentBooking.id);
+                error = res.error;
+             }
              if (!error) {
-                // Check if group is empty now
-                const { count } = await supabase.from('group_members').select('*', { count: 'exact', head: true }).eq('group_id', myGroup.id);
-                if (count === 0) {
-                   await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('group_id', myGroup.id);
-                   await supabase.from('groups').delete().eq('id', myGroup.id);
-                } else if (myGroup.leader_id === user.id) {
-                   const { data: nextMember } = await supabase.from('group_members').select('student_id').eq('group_id', myGroup.id).limit(1).maybeSingle();
-                   if (nextMember) {
-                      await supabase.from('groups').update({ leader_id: nextMember.student_id }).eq('id', myGroup.id);
-                   }
-                }
-                setMyGroup(null);
-                setMyGroupMembers([]);
+                setSlots(prev => prev.map(s => s.id === myCurrentBooking.id ? { ...s, status: 'AVAILABLE', group_id: null } : s));
                 setSelectedSlot(null);
-                showToast("You have left the group.", "info");
+                showToast("Slot released! Please select your new review date and time.", "success");
              } else {
-                showToast("Error leaving group: " + error.message, "error");
+                showToast("Error releasing slot: " + error.message, "error");
              }
              setConfirmModal(null);
           }
        });
     };
-
-    const handleRenameGroup = async () => {
-       if (!tempGroupName.trim() || tempGroupName.trim() === myGroup.name) {
-          setIsRenamingGroup(false);
-          return;
-       }
-       const newName = tempGroupName.trim();
-       const { error } = await supabase
-          .from('groups')
-          .update({ name: newName })
-          .eq('id', myGroup.id);
-       
-       if (error) {
-          showToast("Error renaming group: " + error.message, "error");
-       } else {
-          setMyGroup((prev: any) => prev ? { ...prev, name: newName } : null);
-          showToast("Group renamed successfully!", "success");
-       }
-       setIsRenamingGroup(false);
-    };
-
-    const handleSaveProfile = async () => {
-       if (!user || !editNameInput.trim()) return;
-       setEditProfileSaving(true);
-       
-       let rollToSave = editRollInput.trim().toUpperCase();
-       if (rollToSave.startsWith('U4')) {
-          rollToSave = 'CB.SC.' + rollToSave;
-       }
-       
-       const { error } = await supabase
-          .from('users')
-          .update({
-             full_name: editNameInput.trim(),
-             roll_number: rollToSave
-          })
-          .eq('id', user.id);
-
-       if (!error) {
-          setProfile((prev: any) => ({ ...prev, full_name: editNameInput.trim(), roll_number: rollToSave }));
-          showToast("Profile updated successfully!", "success");
-          setEditProfileOpen(false);
-       } else {
-          showToast("Error updating profile: " + error.message, "error");
-       }
-       setEditProfileSaving(false);
-    };
-
-   const handleCancelBooking = async () => {
-      const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
-      if (!myCurrentBooking) return;
-      setConfirmModal({
-         isOpen: true,
-         title: "Cancel Booking",
-         message: "This slot will immediately become available for other groups. Are you sure?",
-         confirmLabel: "Cancel Booking",
-         danger: true,
-         onConfirm: async () => {
-            const { error } = await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('id', myCurrentBooking.id);
-            if (!error) {
-               // Immediately update local state so UI refreshes without waiting for realtime
-               setSlots(prev => prev.map(s => s.id === myCurrentBooking.id ? { ...s, status: 'AVAILABLE', group_id: null } : s));
-               setSelectedSlot(null);
-               showToast("Booking cancelled. Slot is now available.", "info");
-            } else {
-               showToast(error.message, "error");
-            }
-            setConfirmModal(null);
-         }
-      });
-   };
 
    const handleCopyCode = () => {
       if (!myGroup?.invite_code) return;
@@ -1244,10 +1268,10 @@ export default function StudentPortal() {
                                              </div>
 
                                              {/* Bottom status row */}
-                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '10px', padding: '0.5rem 0.875rem' }}>
-                                                   <Shield size={13} style={{ color: '#34d399' }} />
-                                                   <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Slot Locked</span>
+                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: daysAway < 0 ? 'rgba(251,191,36,0.08)' : 'rgba(52,211,153,0.08)', border: `1px solid ${daysAway < 0 ? 'rgba(251,191,36,0.2)' : 'rgba(52,211,153,0.2)'}`, borderRadius: '10px', padding: '0.5rem 0.875rem' }}>
+                                                   <Shield size={13} style={{ color: daysAway < 0 ? '#fbbf24' : '#34d399' }} />
+                                                   <span style={{ fontSize: '0.75rem', color: daysAway < 0 ? '#fbbf24' : '#34d399', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{daysAway < 0 ? 'Past Review (Locked)' : 'Slot Locked'}</span>
                                                 </div>
                                                 {myGroup.leader_id === user.id && (
                                                    <button onClick={handleCancelBooking}
