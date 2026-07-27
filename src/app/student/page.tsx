@@ -355,7 +355,7 @@ export default function StudentPortal() {
 
    const fetchSubmissionFiles = async (slotId: string) => {
       if (!slotId) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
          .from('submission_files')
          .select('*')
          .eq('slot_id', slotId)
@@ -416,7 +416,11 @@ export default function StudentPortal() {
          }]).select().single();
 
          if (error) {
-            showToast("Error uploading file: " + error.message, "error");
+            if (error.message?.includes('submission_files') || error.code === '42P01') {
+               showToast("Database Table Missing: Please run the SQL snippet in your Supabase SQL Editor to create the submission_files table.", "error");
+            } else {
+               showToast("Error uploading file: " + error.message, "error");
+            }
          } else if (data) {
             setSubmissionFiles(prev => [data, ...prev]);
             showToast(`Attached ${file.name}!`, "success");
@@ -447,7 +451,11 @@ export default function StudentPortal() {
       }]).select().single();
 
       if (error) {
-         showToast("Error attaching link: " + error.message, "error");
+         if (error.message?.includes('submission_files') || error.code === '42P01') {
+            showToast("Database Table Missing: Please run the SQL snippet in your Supabase SQL Editor to create the submission_files table.", "error");
+         } else {
+            showToast("Error attaching link: " + error.message, "error");
+         }
       } else if (data) {
          setSubmissionFiles(prev => [data, ...prev]);
          showToast("Repository link attached!", "success");
