@@ -3,7 +3,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search, FileCode, ExternalLink, Paperclip, Eye } from 'lucide-react';
+import { LayoutDashboard, Menu, X,  CalendarRange, Users, ListOrdered, Settings, Hourglass, Plus, BookOpen, Copy, ArrowLeft, ChevronRight, CheckCircle2, XOctagon, FileText, ChevronDown, CalendarPlus, LogOut, Lock, Clock, Download, Search, FileCode, ExternalLink, Paperclip, Eye, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 
@@ -2209,122 +2209,128 @@ const CourseSkeleton = () => (
                         >
                            Delete Workspace
                         </button>
-                     </div>
-                  </div>
-               )}
-            </div>
-         )}
-      </main>
+                      </div>
+                   </div>
+                )}
+             </div>
+          )}
+       </main>
 
-      {/* =========================================================
+       {/* =========================================================
           SESSION MANAGEMENT OVERLAY (HUD)
           ========================================================= */}
       {manageSlot && (
-        <div className="animate-fade-in-up" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(5,5,10,0.85)', backdropFilter: 'blur(40px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem' }}>
+        <div className="animate-fade-in-up" style={{ position: 'fixed', inset: 0, background: 'rgba(5,5,10,0.85)', backdropFilter: 'blur(30px)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowY: 'auto', zIndex: 2000, padding: '2rem 1rem' }}>
           
           {/* Main Focus Container */}
-          <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+          <div style={{ width: '100%', maxWidth: '880px', background: 'linear-gradient(145deg, rgba(18, 18, 28, 0.96), rgba(12, 12, 18, 0.99))', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '28px', boxShadow: '0 30px 80px rgba(0,0,0,0.7), 0 0 40px rgba(139, 92, 246, 0.1)', padding: '2rem 2.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', margin: 'auto 0' }}>
              
              {/* Header Section */}
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '1.25rem' }}>
                 <div>
-                  <div style={{ display: 'inline-block', padding: '0.6rem 1.25rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', color: '#c4b5fd', borderRadius: '30px', fontSize: '0.875rem', fontWeight: 800, marginBottom: '1.25rem', letterSpacing: '0.1em' }}>
-                     {manageSlot.event_date} • {manageSlot.start_time.substring(0,5)} - {manageSlot.end_time.substring(0,5)}
-                  </div>
-                  <h2 style={{ fontSize: '5rem', fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.04em', lineHeight: 1 }}>{manageSlot.groups?.name || 'Lost Group'}</h2>
+                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.85rem', background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)', color: '#c4b5fd', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '0.08em' }}>
+                      <Clock size={13} /> {manageSlot.event_date} • {manageSlot.start_time.substring(0,5)} - {manageSlot.end_time.substring(0,5)}
+                   </div>
+                   <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}>{manageSlot.groups?.name || 'Unassigned Squad'}</h2>
                 </div>
-                <button onClick={() => setManageSlot(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }} onMouseOver={e=>{e.currentTarget.style.transform='rotate(90deg) scale(1.1)'; e.currentTarget.style.background='rgba(255,255,255,0.15)'}} onMouseOut={e=>{e.currentTarget.style.transform='none'; e.currentTarget.style.background='rgba(255,255,255,0.05)'}}>
-                   <XOctagon size={28} />
+                <button onClick={() => setManageSlot(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', width: '42px', height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseOver={e=>{e.currentTarget.style.background='rgba(244,63,94,0.15)'; e.currentTarget.style.color='#f43f5e';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)'; e.currentTarget.style.color='rgba(255,255,255,0.7)';}}>
+                   <X size={20} />
                 </button>
              </div>
 
              {/* Two Column Control Surface */}
-             <div className="modal-grid">
+             <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', alignItems: 'stretch' }}>
                 
                 {/* Left: Status Control Panel */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '32px', padding: '2rem' }}>
-                   <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2rem', fontWeight: 800 }}>Session Outcome</h3>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
+                   <h3 style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1rem', fontWeight: 900 }}>Session Outcome</h3>
                    
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                      {[
-                       { val: 'BOOKED', label: 'Pending', icon: <Clock size={20}/>, col: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' },
-                       { val: 'PRESENTED', label: 'Success', icon: <CheckCircle2 size={20}/>, col: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' },
-                       { val: 'ABSENT', label: 'Absent', icon: <XOctagon size={20}/>, col: '#f43f5e', bg: 'rgba(244, 63, 94, 0.15)' },
-                       { val: 'AVAILABLE', label: 'Kick Group', icon: <Lock size={20}/>, col: '#eab308', bg: 'rgba(234, 179, 8, 0.15)' }
+                       { val: 'BOOKED', label: 'Pending', icon: <Clock size={16}/>, col: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' },
+                       { val: 'PRESENTED', label: 'Success', icon: <CheckCircle2 size={16}/>, col: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' },
+                       { val: 'ABSENT', label: 'Absent', icon: <XOctagon size={16}/>, col: '#f43f5e', bg: 'rgba(244, 63, 94, 0.15)' },
+                       { val: 'AVAILABLE', label: 'Kick Group', icon: <Lock size={16}/>, col: '#eab308', bg: 'rgba(234, 179, 8, 0.15)' }
                      ].map(st => (
                         <button 
                            key={st.val}
                            onClick={() => setManageStatus(st.val)}
                            style={{ 
-                             display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left',
-                             background: manageStatus === st.val ? st.bg : 'transparent',
+                             display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.85rem 1.1rem', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left',
+                             background: manageStatus === st.val ? st.bg : 'rgba(255,255,255,0.02)',
                              border: `1px solid ${manageStatus === st.val ? st.col : 'rgba(255,255,255,0.05)'}`,
-                             color: manageStatus === st.val ? st.col : 'rgba(255,255,255,0.4)',
-                             transform: manageStatus === st.val ? 'scale(1.02)' : 'scale(1)'
+                             color: manageStatus === st.val ? st.col : 'rgba(255,255,255,0.6)',
                            }}
                         >
                            {st.icon} 
-                           <span style={{ fontSize: '1.25rem', fontWeight: manageStatus === st.val ? 800 : 700 }}>{st.label}</span>
+                           <span style={{ fontSize: '0.95rem', fontWeight: manageStatus === st.val ? 800 : 700 }}>{st.label}</span>
                         </button>
                      ))}
                    </div>
                 </div>
 
                 {/* Right: Data Input Dash */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                    
-                   {/* Massive Grade Input */}
-                   <div style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0) 100%)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '32px', padding: '2.5rem 3rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 800 }}>Final<br/>Grade</div>
-                      <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                   {/* Compact Grade Input */}
+                   <div style={{ background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '22px', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.14em', fontWeight: 900 }}>Final Grade</div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
                          <input 
                            type="number" 
                            value={manageGrade} 
                            onChange={e=>setManageGrade(e.target.value)} 
                            placeholder="--"
                            min="0"
-                           style={{ width: '180px', background: 'transparent', border: 'none', color: '#fff', fontSize: '6rem', fontWeight: 900, textAlign: 'right', outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)' }}
+                           style={{ width: '90px', background: 'transparent', border: 'none', color: '#fff', fontSize: '2.5rem', fontWeight: 900, textAlign: 'right', outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)' }}
                          />
-                         <span style={{ fontSize: '3rem', color: 'rgba(255,255,255,0.15)', fontWeight: 800, margin: '0 0.5rem' }}>/</span>
+                         <span style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.2)', fontWeight: 800 }}>/</span>
                          <input 
                            type="number" 
                            value={manageMaxGrade} 
                            onChange={e=>setManageMaxGrade(e.target.value)} 
                            placeholder="100"
                            min="0"
-                           style={{ width: '120px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '3rem', fontWeight: 800, outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)', transition: 'color 0.2s' }}
+                           style={{ width: '70px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '1.5rem', fontWeight: 800, outline: 'none', padding: 0, fontFamily: 'var(--font-outfit)', transition: 'color 0.2s' }}
                            onFocus={e=>e.currentTarget.style.color='#fff'}
-                           onBlur={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}
+                           onBlur={e=>e.currentTarget.style.color='rgba(255,255,255,0.4)'}
                          />
                       </div>
                    </div>
 
                     {/* Student Uploaded Review Documents */}
-                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '28px', padding: '1.75rem 2rem' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                             <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
-                                <FileText size={16} />
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1.25rem 1.5rem' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                             <div style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c4b5fd' }}>
+                                <FileText size={14} />
                              </div>
-                             <h3 style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 800 }}>Upload Review Documents ({professorSlotFiles.length})</h3>
+                             <h3 style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0, fontWeight: 900 }}>Upload Review Documents ({professorSlotFiles.length})</h3>
                           </div>
                           {fetchingSlotFiles && <Hourglass className="animate-spin" size={14} style={{ color: 'rgba(255,255,255,0.4)' }} />}
                        </div>
 
                        {professorSlotFiles.length === 0 ? (
-                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '0.5rem 0' }}>No submission documents uploaded by squad yet.</div>
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '0.35rem 0' }}>No submission documents uploaded by squad yet.</div>
                        ) : (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                              {professorSlotFiles.map(file => {
                                 const isLink = file.file_type === 'link';
                                 return (
-                                   <div key={file.id} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{file.file_name}</div>
-                                      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>{file.file_size}</span>
+                                   <div key={file.id} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.6rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflow: 'hidden' }}>
+                                         <div style={{ color: isLink ? '#34d399' : '#c4b5fd', flexShrink: 0 }}>
+                                            {isLink ? <LinkIcon size={16} /> : <FileText size={16} />}
+                                         </div>
+                                         <div style={{ overflow: 'hidden' }}>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.file_name}</div>
+                                            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>{file.file_size}</span>
+                                         </div>
+                                      </div>
                                       <a href={file.file_url} target="_blank" rel="noopener noreferrer" download={!isLink ? file.file_name : undefined}
-                                         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.7rem', borderRadius: '8px', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd', fontSize: '0.75rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s' }}
-                                         onMouseOver={e => e.currentTarget.style.background = 'rgba(139,92,246,0.35)'}
-                                         onMouseOut={e => e.currentTarget.style.background = 'rgba(139,92,246,0.2)'}
+                                         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'rgba(139,92,246,0.18)', border: '1px solid rgba(139,92,246,0.35)', color: '#c4b5fd', fontSize: '0.75rem', fontWeight: 800, textDecoration: 'none', transition: 'all 0.2s', flexShrink: 0 }}
+                                         onMouseOver={e => e.currentTarget.style.background = 'rgba(139,92,246,0.3)'}
+                                         onMouseOut={e => e.currentTarget.style.background = 'rgba(139,92,246,0.18)'}
                                       >
                                          {isLink ? <ExternalLink size={12} /> : <Download size={12} />}
                                          {isLink ? 'Open Link' : 'View / Download'}
@@ -2337,23 +2343,22 @@ const CourseSkeleton = () => (
                     </div>
 
                    {/* Open Text Area */}
-                   <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '32px', padding: '2.5rem 3rem', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                      <h3 style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '1.5rem', fontWeight: 800 }}>Professor Insights</h3>
+                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '22px', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
+                      <h3 style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.75rem', fontWeight: 900 }}>Professor Insights</h3>
                       <textarea 
                         value={manageNotes} 
                         onChange={e=>setManageNotes(e.target.value)} 
                         placeholder="Log detailed private commentary, rubric notes, or presentation critiques here..." 
-                        style={{ flex: 1, minHeight: '120px', background: 'transparent', border: 'none', color: '#fff', fontSize: '1.25rem', outline: 'none', resize: 'none', lineHeight: '1.6' }} 
+                        style={{ minHeight: '90px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', color: '#fff', fontSize: '0.9rem', outline: 'none', resize: 'vertical', padding: '0.75rem 1rem', lineHeight: '1.5' }} 
                       />
                    </div>
                 </div>
-
              </div>
 
-             {/* Huge Action Button */}
-             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                <button onClick={saveSlotDetails} disabled={manageSaving} className="btn pulse-glow" style={{ background: '#fff', color: '#000', padding: '1.5rem 4rem', fontSize: '1.35rem', fontWeight: 900, borderRadius: '100px', display: 'flex', gap: '1rem', alignItems: 'center', cursor: manageSaving?'not-allowed':'pointer', border: 'none', transition: 'transform 0.2s' }} onMouseOver={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}>
-                   {manageSaving ? <Hourglass className="animate-spin" size={28}/> : <><CheckCircle2 size={28} /> Seal Database Record</>}
+             {/* Footer Action Bar */}
+             <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <button onClick={saveSlotDetails} disabled={manageSaving} style={{ background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', padding: '0.85rem 2.25rem', fontSize: '0.95rem', fontWeight: 800, borderRadius: '14px', display: 'flex', gap: '0.6rem', alignItems: 'center', cursor: manageSaving?'not-allowed':'pointer', border: 'none', boxShadow: '0 8px 24px rgba(139,92,246,0.3)', transition: 'all 0.2s' }} onMouseOver={e=>e.currentTarget.style.transform='translateY(-2px)'} onMouseOut={e=>e.currentTarget.style.transform='translateY(0)'}>
+                   {manageSaving ? <Hourglass className="animate-spin" size={18}/> : <><CheckCircle2 size={18} /> Save Session Record</>}
                 </button>
              </div>
 
