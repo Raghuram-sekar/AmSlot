@@ -543,6 +543,17 @@ export default function StudentPortal() {
          showToast("Only the Group Leader can lock a slot.", "error");
          return;
       }
+
+      // Block locking slots for past dates
+      const targetSlotObj = slots.find(s => s.id === selectedSlot);
+      const targetEventObj = targetSlotObj ? events.find(e => e.id === targetSlotObj.event_id) : null;
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (targetEventObj?.date && targetEventObj.date < todayStr) {
+         showToast("Cannot book slots for past dates. Please select an upcoming review date.", "error");
+         return;
+      }
+
       setBookingLoading(true);
       const { error: rpcError } = await supabase.rpc('book_slot', { p_slot_id: selectedSlot, p_group_id: myGroup.id });
       if (rpcError) {
@@ -1335,69 +1346,90 @@ export default function StudentPortal() {
                                  </div>
 
                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {slots.filter(s => events.find(e => e.id === s.event_id)?.date === activeDate).length === 0 && (
-                                       <div style={{ color: 'rgba(255,255,255,0.3)', padding: '3rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', fontSize: '0.9rem' }}>No slots for this date.</div>
-                                    )}
-                                    {slots.filter(s => events.find(e => e.id === s.event_id)?.date === activeDate).map((slot) => {
-                                       const isAvailable = slot.status === 'AVAILABLE';
-                                       const isBookedByOthers = !isAvailable && slot.group_id !== myGroup?.id;
-                                       const isLeader = myGroup?.leader_id === user.id;
-                                       const isSelected = selectedSlot === slot.id;
-                                        const myCurrentBooking = slots.find(sl => sl.group_id === myGroup?.id);
-                                        const canSelect = isAvailable && isLeader && slot.id !== myCurrentBooking?.id;
-
-                                       let leftBorder = 'rgba(255,255,255,0.06)';
-                                       let bg = 'rgba(255,255,255,0.02)';
-                                       if (isBookedByOthers) { leftBorder = 'rgba(244,63,94,0.4)'; bg = 'rgba(244,63,94,0.03)'; }
-                                       if (isSelected) { leftBorder = 'var(--primary)'; bg = 'rgba(139,92,246,0.08)'; }
-                                       if (isAvailable && !isSelected) { leftBorder = 'rgba(52,211,153,0.3)'; }
+                                    {(() => {
+                                       const todayStr = new Date().toISOString().split('T')[0];
+                                       const isPastDate = activeDate ? activeDate < todayStr : false;
+                                       const filteredSlots = slots.filter(s => events.find(e => e.id === s.event_id)?.date === activeDate);
 
                                        return (
-                                          <div key={slot.id}
-                                             onClick={() => { if (canSelect) setSelectedSlot(isSelected ? null : slot.id); }}
-                                             style={{
-                                                display: 'flex', alignItems: 'center', gap: '1.25rem',
-                                                padding: '1rem 1.5rem', borderRadius: '14px',
-                                                background: bg,
-                                                border: '1px solid rgba(255,255,255,0.04)',
-                                                borderLeft: `3px solid ${leftBorder}`,
-                                                cursor: canSelect ? 'pointer' : 'not-allowed',
-                                                opacity: isBookedByOthers ? 0.45 : 1,
-                                                transition: 'all 0.18s',
-                                                transform: isSelected ? 'scale(1.01)' : 'scale(1)',
-                                             }}
-                                             onMouseOver={e => { if (canSelect) e.currentTarget.style.background = isSelected ? bg : 'rgba(255,255,255,0.04)'; }}
-                                             onMouseOut={e => { e.currentTarget.style.background = bg; }}
-                                          >
-                                             {/* Time */}
-                                             <div style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 900, color: isSelected ? '#fff' : isBookedByOthers ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: '75px', lineHeight: 1 }}>
-                                                {slot.start_time.substring(0, 5)}
-                                             </div>
-
-                                             {/* Duration pill */}
-                                             <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>→ {slot.end_time.substring(0, 5)}</div>
-
-                                             {/* Spacer */}
-                                             <div style={{ flex: 1 }} />
-
-                                             {/* Status badge */}
-                                             {isBookedByOthers ? (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#f43f5e', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                   <Lock size={10} /> Taken
-                                                </div>
-                                             ) : isSelected ? (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#c4b5fd', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                   <CheckCircle2 size={10} /> Selected
-                                                </div>
-                                             ) : (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#34d399', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                   Open
+                                          <>
+                                             {isPastDate && (
+                                                <div style={{ background: 'rgba(251, 191, 36, 0.08)', border: '1px solid rgba(251, 191, 36, 0.2)', borderRadius: '12px', padding: '0.75rem 1rem', color: '#fbbf24', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                                   <Clock size={14} /> This review date has passed. Slots for past dates cannot be locked.
                                                 </div>
                                              )}
-                                          </div>
+                                             {filteredSlots.length === 0 && (
+                                                <div style={{ color: 'rgba(255,255,255,0.3)', padding: '3rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', fontSize: '0.9rem' }}>No slots for this date.</div>
+                                             )}
+                                             {filteredSlots.map((slot) => {
+                                                const isAvailable = slot.status === 'AVAILABLE';
+                                                const isBookedByOthers = !isAvailable && slot.group_id !== myGroup?.id;
+                                                const isLeader = myGroup?.leader_id === user.id;
+                                                const isSelected = selectedSlot === slot.id;
+                                                const myCurrentBooking = slots.find(sl => sl.group_id === myGroup?.id);
+                                                const canSelect = isAvailable && isLeader && !isPastDate && slot.id !== myCurrentBooking?.id;
+
+                                                let leftBorder = 'rgba(255,255,255,0.06)';
+                                                let bg = 'rgba(255,255,255,0.02)';
+                                                if (isBookedByOthers) { leftBorder = 'rgba(244,63,94,0.4)'; bg = 'rgba(244,63,94,0.03)'; }
+                                                else if (isPastDate) { leftBorder = 'rgba(255,255,255,0.1)'; bg = 'rgba(255,255,255,0.01)'; }
+                                                else if (isSelected) { leftBorder = 'var(--primary)'; bg = 'rgba(139,92,246,0.08)'; }
+                                                else if (isAvailable && !isSelected) { leftBorder = 'rgba(52,211,153,0.3)'; }
+
+                                                return (
+                                                   <div key={slot.id}
+                                                      onClick={() => { if (canSelect) setSelectedSlot(isSelected ? null : slot.id); }}
+                                                      style={{
+                                                         display: 'flex', alignItems: 'center', gap: '1.25rem',
+                                                         padding: '1rem 1.5rem', borderRadius: '14px',
+                                                         background: bg,
+                                                         border: '1px solid rgba(255,255,255,0.04)',
+                                                         borderLeft: `3px solid ${leftBorder}`,
+                                                         cursor: canSelect ? 'pointer' : 'not-allowed',
+                                                         opacity: isBookedByOthers || isPastDate ? 0.45 : 1,
+                                                         transition: 'all 0.18s',
+                                                         transform: isSelected ? 'scale(1.01)' : 'scale(1)',
+                                                      }}
+                                                      onMouseOver={e => { if (canSelect) e.currentTarget.style.background = isSelected ? bg : 'rgba(255,255,255,0.04)'; }}
+                                                      onMouseOut={e => { e.currentTarget.style.background = bg; }}
+                                                   >
+                                                      {/* Time */}
+                                                      <div style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 900, color: isSelected ? '#fff' : isBookedByOthers || isPastDate ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: '75px', lineHeight: 1 }}>
+                                                         {slot.start_time.substring(0, 5)}
+                                                      </div>
+
+                                                      {/* Duration pill */}
+                                                      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>→ {slot.end_time.substring(0, 5)}</div>
+
+                                                      {/* Spacer */}
+                                                      <div style={{ flex: 1 }} />
+
+                                                      {/* Status badge */}
+                                                      {isBookedByOthers ? (
+                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#f43f5e', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                            <Lock size={10} /> Taken
+                                                         </div>
+                                                      ) : isPastDate ? (
+                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                            Expired
+                                                         </div>
+                                                      ) : isSelected ? (
+                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#c4b5fd', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                            <CheckCircle2 size={10} /> Selected
+                                                         </div>
+                                                      ) : (
+                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#34d399', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                            Open
+                                                         </div>
+                                                      )}
+                                                   </div>
+                                                );
+                                             })}
+                                          </>
                                        );
-                                    })}
+                                    })()}
                                  </div>
+                              </div>
 
                                   {/* Lock Slot CTA */}
                                   {selectedSlot && myGroup.leader_id === user.id && (() => {
@@ -1425,7 +1457,6 @@ export default function StudentPortal() {
                                     </div>
                                  )}
                               </div>
-                           </div>
                         )}
                      </div>
                   )}
