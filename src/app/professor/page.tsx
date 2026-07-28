@@ -472,26 +472,37 @@ export default function ProfessorDashboard() {
         showToast("No student records to export", "error");
         return;
      }
-     const headers = ["Student Name", "Section", "Roll Number", "Assigned Team", "Email Address", "Joined Date"];
-     const rows = directoryStudents.map(s => [
-        `"${(s.full_name || '').replace(/"/g, '""')}"`,
-        `"${s.parsedRoll.section}"`,
-        `"${formatFullRollNumber(s.roll_number)}"`,
-        `"${s.teamName || 'No Team'}"`,
-        `"${s.email}"`,
-        `"${new Date(s.joined_at).toLocaleString()}"`
+
+     const escapeCell = (val: any) => {
+        if (val === null || val === undefined) return '';
+        const str = String(val).trim();
+        if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+           return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+     };
+
+     const headers = ["S.No", "Student Name", "Roll Number", "Section", "Assigned Team", "Email Address"];
+     const rows = directoryStudents.map((s, idx) => [
+        idx + 1,
+        escapeCell(s.full_name || 'N/A'),
+        escapeCell(formatFullRollNumber(s.roll_number)),
+        escapeCell(s.parsedRoll?.section || 'General'),
+        escapeCell(s.teamName || 'Unassigned'),
+        escapeCell(s.email || 'N/A')
      ]);
-     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+
+     const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
      const url = URL.createObjectURL(blob);
      const link = document.createElement("a");
      link.setAttribute("href", url);
-     link.setAttribute("download", `Student_Directory_${activeCourse?.name || 'Course'}.csv`);
+     link.setAttribute("download", `Student_Directory_${activeCourse?.name?.replace(/[^a-zA-Z0-9]/g, '_') || 'Course'}.csv`);
      link.style.visibility = 'hidden';
      document.body.appendChild(link);
      link.click();
      document.body.removeChild(link);
-     showToast("Student directory exported to CSV", "success");
+     showToast("Student directory exported cleanly to CSV", "success");
   };
 
   const handleDeleteProject = async (projectId: string) => {
