@@ -14,14 +14,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const MicrosoftIcon = () => (
-  <svg viewBox="0 0 23 23" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-    <path fill="#f35325" d="M1 1h10v10H1z"/>
-    <path fill="#81bc06" d="M12 1h10v10H12z"/>
-    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-    <path fill="#808080" d="M12 12h10v10H12z"/>
-  </svg>
-);
+
 
 export function isAmritaEmail(email: string): boolean {
   if (!email) return false;
@@ -269,24 +262,6 @@ export default function AuthPage() {
     } catch (err: any) {
       setError(err.message || 'OTP verification failed. Please try again.');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMicrosoftAuth = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          scopes: 'email profile openid',
-          redirectTo: `${window.location.origin}/onboarding`
-        }
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during Microsoft authentication.');
       setLoading(false);
     }
   };

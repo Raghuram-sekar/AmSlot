@@ -1018,7 +1018,7 @@ const CourseSkeleton = () => (
                <div className="metrics-grid">
                   <div className="metric-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Enrolled</div>
-                     <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#fff' }}>{courseGroups.reduce((acc, g) => acc + (g.group_members?.length || 0), 0)} <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.2)' }}>Students</span></div>
+                     <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#fff' }}>{directoryStudents.length} <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.2)' }}>Students</span></div>
                   </div>
                   <div className="metric-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Slot Utilization</div>
