@@ -535,17 +535,6 @@ export default function AuthPage() {
               >
                 <GoogleIcon /> Continue with Google
               </button>
-
-              <button 
-                type="button"
-                onClick={handleMicrosoftAuth}
-                disabled={loading}
-                style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-              >
-                <MicrosoftIcon /> Continue with Microsoft
-              </button>
             </div>
 
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
