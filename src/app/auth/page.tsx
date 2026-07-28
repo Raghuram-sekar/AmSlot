@@ -60,33 +60,6 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        if (authMode === 'MAGIC_LINK') {
-          if (!email.trim()) {
-            throw new Error("Please enter your email address to receive a Magic Link.");
-          }
-          const { error: magicErr } = await supabase.auth.signInWithOtp({
-            email: email.trim().toLowerCase(),
-            options: {
-              emailRedirectTo: `${window.location.origin}/student`
-            }
-          });
-          if (magicErr) throw magicErr;
-          alert(`Magic Login Link sent to ${email.trim()}! Check your inbox.`);
-          return;
-        }
-
-        if (authMode === 'RESET_PASSWORD') {
-          if (!email.trim()) {
-            throw new Error("Please enter your email address to reset your password.");
-          }
-          const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-            redirectTo: `${window.location.origin}/auth?reset=true`
-          });
-          if (resetErr) throw resetErr;
-          alert(`Password recovery link sent to ${email.trim()}! Check your inbox.`);
-          return;
-        }
-
         // Standard Password Sign In
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
@@ -480,70 +453,20 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              {isLogin && authMode === 'PASSWORD' && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <label style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)' }}>Password</label>
-                    <button 
-                      type="button"
-                      onClick={() => { setAuthMode('RESET_PASSWORD'); setError(null); }}
-                      style={{ background: 'transparent', border: 'none', color: '#c4b5fd', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <div style={{ position: 'relative' }}>
-                    <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
-                    <input 
-                      type="password"
-                      required 
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••" 
-                      style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-                    />
-                  </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                  <input 
+                    type="password"
+                    required 
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••" 
+                    style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                  />
                 </div>
-              )}
-
-              {!isLogin && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
-                    <input 
-                      type="password"
-                      required 
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••" 
-                      style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {isLogin && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '0.2rem' }}>
-                  {authMode === 'PASSWORD' ? (
-                    <button 
-                      type="button"
-                      onClick={() => { setAuthMode('MAGIC_LINK'); setError(null); }}
-                      style={{ background: 'transparent', border: 'none', color: '#34d399', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
-                    >
-                      ✨ Send Magic Login Link instead
-                    </button>
-                  ) : (
-                    <button 
-                      type="button"
-                      onClick={() => { setAuthMode('PASSWORD'); setError(null); }}
-                      style={{ background: 'transparent', border: 'none', color: '#c4b5fd', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
-                    >
-                      🔑 Sign in with Password instead
-                    </button>
-                  )}
-                </div>
-              )}
+              </div>
 
               {!isLogin && (
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
@@ -589,7 +512,7 @@ export default function AuthPage() {
                 style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '1rem', opacity: loading ? 0.7 : 1 }}
                 disabled={loading}
               >
-                {loading ? 'Processing...' : isLogin ? (authMode === 'MAGIC_LINK' ? '✨ Send Magic Link' : authMode === 'RESET_PASSWORD' ? '🔒 Send Reset Email' : 'Secure Sign In') : 'Create Account'}
+                {loading ? 'Processing...' : isLogin ? 'Secure Sign In' : 'Create Account'}
               </button>
             </form>
 
