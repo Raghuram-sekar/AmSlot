@@ -516,6 +516,38 @@ export default function AuthPage() {
               </button>
             </form>
 
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0 1.25rem 0', gap: '1rem' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}></div>
+              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>OR</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }}></div>
+            </div>
+
+            {/* OAuth Sign In Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button 
+                type="button"
+                onClick={handleGoogleAuth}
+                disabled={loading}
+                style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+              >
+                <GoogleIcon /> Continue with Google
+              </button>
+
+              <button 
+                type="button"
+                onClick={handleMicrosoftAuth}
+                disabled={loading}
+                style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+              >
+                <MicrosoftIcon /> Continue with Microsoft
+              </button>
+            </div>
+
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>
                  AmSlot v2.0.0 • Amrita Verified Identity
