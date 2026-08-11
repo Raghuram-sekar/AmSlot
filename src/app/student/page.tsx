@@ -1701,41 +1701,43 @@ export default function StudentPortal() {
 
                                                       {/* Status badge */}
                                                       {isBookedByOthers ? (
-                                                          <div 
-                                                             title={`Public Reservation: Booked by ${slot.group_name || slot.groups?.name || 'Group'}`}
-                                                             style={{ 
-                                                                display: 'inline-flex', 
-                                                                alignItems: 'center', 
-                                                                gap: '0.6rem', 
-                                                                background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.14), rgba(159, 18, 57, 0.22))', 
-                                                                border: '1px solid rgba(244, 63, 94, 0.35)', 
-                                                                borderRadius: '12px', 
-                                                                padding: '0.4rem 0.85rem', 
-                                                                boxShadow: '0 4px 15px rgba(244, 63, 94, 0.08)' 
-                                                             }}
-                                                          >
-                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                                <Lock size={12} style={{ color: '#f43f5e', flexShrink: 0 }} />
-                                                                <span style={{ fontSize: '0.68rem', color: '#f43f5e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Booked by</span>
-                                                             </div>
-                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(244, 63, 94, 0.35)' }} />
-                                                             <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.05em' }}>
-                                                                {slot.group_name || slot.groups?.name || 'Group'}
-                                                             </span>
+                                                           <div 
+                                                              title={`Public Reservation: Booked by ${slot.group_name || slot.groups?.name || 'Group'}`}
+                                                              style={{ 
+                                                                 display: 'inline-flex', 
+                                                                 alignItems: 'center', 
+                                                                 justifyContent: 'space-between',
+                                                                 width: '185px',
+                                                                 minWidth: '185px',
+                                                                 background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.14), rgba(159, 18, 57, 0.22))', 
+                                                                 border: '1px solid rgba(244, 63, 94, 0.35)', 
+                                                                 borderRadius: '12px', 
+                                                                 padding: '0.45rem 0.85rem', 
+                                                                 boxShadow: '0 4px 15px rgba(244, 63, 94, 0.08)' 
+                                                              }}
+                                                           >
+                                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                                 <Lock size={12} style={{ color: '#f43f5e', flexShrink: 0 }} />
+                                                                 <span style={{ fontSize: '0.68rem', color: '#f43f5e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Booked by</span>
+                                                              </div>
+                                                              <div style={{ width: '1px', height: '14px', background: 'rgba(244, 63, 94, 0.35)' }} />
+                                                              <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.05em' }}>
+                                                                 {slot.group_name || slot.groups?.name || 'Group'}
+                                                              </span>
+                                                           </div>
+                                                        ) : isPastDate ? (
+                                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '185px', minWidth: '185px', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '12px', padding: '0.45rem 0.85rem', color: '#fbbf24', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                             <History size={12} /> Archived
                                                           </div>
-                                                       ) : isPastDate ? (
-                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#fbbf24', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                            <History size={10} /> Archived
-                                                         </div>
-                                                      ) : isSelected ? (
-                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#c4b5fd', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                            <CheckCircle2 size={10} /> Selected
-                                                         </div>
-                                                      ) : (
-                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#34d399', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                            Open
-                                                         </div>
-                                                      )}
+                                                       ) : isSelected ? (
+                                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '185px', minWidth: '185px', gap: '0.35rem', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: '12px', padding: '0.45rem 0.85rem', color: '#c4b5fd', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                             <CheckCircle2 size={12} /> Selected
+                                                          </div>
+                                                       ) : (
+                                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '185px', minWidth: '185px', gap: '0.35rem', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '12px', padding: '0.45rem 0.85rem', color: '#34d399', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                                             Open
+                                                          </div>
+                                                       )}
                                                    </div>
                                                 );
                                              })}
