@@ -525,7 +525,7 @@ export default function StudentPortal() {
       const { data: evData } = await supabase.from('events').select('id').eq('project_id', activeProject.id);
       if (!evData || evData.length === 0) return;
       const evIds = evData.map((e: any) => e.id);
-      const { data: slData } = await supabase.from('slots').select('*').in('event_id', evIds).order('start_time', { ascending: true });
+      const { data: slData } = await supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true });
       if (slData) setSlots(slData);
    };
 
@@ -684,7 +684,7 @@ export default function StudentPortal() {
          setEvents(evData);
          setActiveDate(evData[0].date);
          const evIds = evData.map((e: any) => e.id);
-         const { data: slData } = await supabase.from('slots').select('*').in('event_id', evIds).order('start_time', { ascending: true });
+         const { data: slData } = await supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true });
          if (slData) setSlots(slData);
       } else {
          setEvents([]);
@@ -1661,7 +1661,7 @@ export default function StudentPortal() {
                                                          border: '1px solid rgba(255,255,255,0.04)',
                                                          borderLeft: `3px solid ${leftBorder}`,
                                                          cursor: canSelect ? 'pointer' : 'not-allowed',
-                                                         opacity: isBookedByOthers || isPastDate ? 0.45 : 1,
+                                                         opacity: isPastDate ? 0.45 : isBookedByOthers ? 0.85 : 1,
                                                          transition: 'all 0.18s',
                                                          transform: isSelected ? 'scale(1.01)' : 'scale(1)',
                                                       }}
@@ -1669,7 +1669,7 @@ export default function StudentPortal() {
                                                       onMouseOut={e => { e.currentTarget.style.background = bg; }}
                                                    >
                                                       {/* Time */}
-                                                      <div style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 900, color: isSelected ? '#fff' : isBookedByOthers || isPastDate ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: '75px', lineHeight: 1 }}>
+                                                      <div style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 900, color: isSelected ? '#fff' : isBookedByOthers ? 'rgba(255,255,255,0.85)' : isPastDate ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: '75px', lineHeight: 1 }}>
                                                          {slot.start_time.substring(0, 5)}
                                                       </div>
 
@@ -1681,8 +1681,12 @@ export default function StudentPortal() {
 
                                                       {/* Status badge */}
                                                       {isBookedByOthers ? (
-                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#f43f5e', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                            <Lock size={10} /> Taken
+                                                         <div 
+                                                            title={`Public Reservation: Booked by ${slot.groups?.name || 'Group'}`}
+                                                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: '10px', padding: '0.35rem 0.85rem', color: '#f43f5e', fontSize: '0.75rem', fontWeight: 800 }}
+                                                         >
+                                                            <Users size={13} style={{ color: '#f43f5e', flexShrink: 0 }} />
+                                                            <span>Booked by <strong style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{slot.groups?.name || 'Group'}</strong></span>
                                                          </div>
                                                       ) : isPastDate ? (
                                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#fbbf24', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
