@@ -1706,7 +1706,7 @@ export default function StudentPortal() {
                                                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: '10px', padding: '0.35rem 0.85rem', color: '#f43f5e', fontSize: '0.75rem', fontWeight: 800 }}
                                                          >
                                                             <Lock size={11} style={{ flexShrink: 0 }} />
-                                                            <span>{slot.group_name || slot.groups?.name || 'TAKEN'}</span>
+                                                            <span>Booked by <strong style={{ color: '#fff', fontWeight: 900, background: 'rgba(244,63,94,0.25)', padding: '0.15rem 0.45rem', borderRadius: '6px', border: '1px solid rgba(244,63,94,0.35)', fontFamily: 'var(--font-outfit)', letterSpacing: '0.02em' }}>{slot.group_name || slot.groups?.name || 'Group'}</strong></span>
                                                          </div>
                                                       ) : isPastDate ? (
                                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#fbbf24', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
