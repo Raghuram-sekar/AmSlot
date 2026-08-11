@@ -521,12 +521,22 @@ export default function StudentPortal() {
     }, [viewState, activeProject?.id, activeCourseId]);
 
    const reloadSlots = async () => {
-      if (!activeProject) return;
+      if (!activeProject || !activeCourseId) return;
       const { data: evData } = await supabase.from('events').select('id').eq('project_id', activeProject.id);
       if (!evData || evData.length === 0) return;
       const evIds = evData.map((e: any) => e.id);
-      const { data: slData } = await supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true });
-      if (slData) setSlots(slData);
+      const [slRes, grpRes] = await Promise.all([
+         supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true }),
+         supabase.from('groups').select('id, name').eq('course_id', activeCourseId)
+      ]);
+      const groupMap = new Map((grpRes.data || []).map((g: any) => [g.id, g.name]));
+      if (slRes.data) {
+         const enriched = slRes.data.map((s: any) => ({
+            ...s,
+            group_name: s.groups?.name || (s.group_id ? groupMap.get(s.group_id) : null)
+         }));
+         setSlots(enriched);
+      }
    };
 
     useEffect(() => {
@@ -684,8 +694,18 @@ export default function StudentPortal() {
          setEvents(evData);
          setActiveDate(evData[0].date);
          const evIds = evData.map((e: any) => e.id);
-         const { data: slData } = await supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true });
-         if (slData) setSlots(slData);
+         const [slRes, grpRes] = await Promise.all([
+            supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true }),
+            activeCourseId ? supabase.from('groups').select('id, name').eq('course_id', activeCourseId) : Promise.resolve({ data: [] })
+         ]);
+         const groupMap = new Map((grpRes.data || []).map((g: any) => [g.id, g.name]));
+         if (slRes.data) {
+            const enriched = slRes.data.map((s: any) => ({
+               ...s,
+               group_name: s.groups?.name || (s.group_id ? groupMap.get(s.group_id) : null)
+            }));
+            setSlots(enriched);
+         }
       } else {
          setEvents([]);
          setSlots([]);
@@ -1685,8 +1705,8 @@ export default function StudentPortal() {
                                                             title={`Public Reservation: Booked by ${slot.groups?.name || 'Group'}`}
                                                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.3)', borderRadius: '10px', padding: '0.35rem 0.85rem', color: '#f43f5e', fontSize: '0.75rem', fontWeight: 800 }}
                                                          >
-                                                            <Users size={13} style={{ color: '#f43f5e', flexShrink: 0 }} />
-                                                            <span>Booked by <strong style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{slot.groups?.name || 'Group'}</strong></span>
+                                                            <Lock size={11} style={{ flexShrink: 0 }} />
+                                                            <span>{slot.group_name || slot.groups?.name || 'TAKEN'}</span>
                                                          </div>
                                                       ) : isPastDate ? (
                                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#fbbf24', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
