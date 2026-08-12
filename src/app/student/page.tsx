@@ -1726,21 +1726,23 @@ export default function StudentPortal() {
                                                                 display: 'inline-flex', 
                                                                 alignItems: 'center', 
                                                                 justifyContent: 'space-between',
-                                                                width: '185px',
-                                                                minWidth: '185px',
+                                                                gap: '0.5rem',
+                                                                minWidth: '170px',
+                                                                maxWidth: '220px',
                                                                 background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(59, 130, 246, 0.3))', 
                                                                 border: '1px solid rgba(6, 182, 212, 0.45)', 
                                                                 borderRadius: '12px', 
-                                                                padding: '0.45rem 0.85rem', 
-                                                                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.15)' 
+                                                                padding: '0.42rem 0.8rem', 
+                                                                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.15)',
+                                                                whiteSpace: 'nowrap'
                                                              }}
                                                           >
-                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
                                                                 <CheckCircle2 size={13} style={{ color: '#22d3ee', flexShrink: 0 }} />
-                                                                <span style={{ fontSize: '0.68rem', color: '#22d3ee', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>YOUR SLOT</span>
+                                                                <span style={{ fontSize: '0.66rem', color: '#22d3ee', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>YOUR SLOT</span>
                                                              </div>
-                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(6, 182, 212, 0.4)' }} />
-                                                             <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.05em' }}>
+                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(6, 182, 212, 0.4)', flexShrink: 0 }} />
+                                                             <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>
                                                                 {myGroup?.name || 'Squad'}
                                                              </span>
                                                           </div>
@@ -1751,16 +1753,18 @@ export default function StudentPortal() {
                                                                  display: 'inline-flex', 
                                                                  alignItems: 'center', 
                                                                  justifyContent: 'space-between',
-                                                                 width: '185px',
-                                                                 minWidth: '185px',
+                                                                 gap: '0.5rem',
+                                                                 minWidth: '170px',
+                                                                 maxWidth: '220px',
                                                                  background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.14), rgba(159, 18, 57, 0.22))', 
                                                                  border: '1px solid rgba(244, 63, 94, 0.35)', 
                                                                  borderRadius: '12px', 
-                                                                 padding: '0.45rem 0.85rem', 
-                                                                 boxShadow: '0 4px 15px rgba(244, 63, 94, 0.08)' 
+                                                                 padding: '0.42rem 0.8rem', 
+                                                                 boxShadow: '0 4px 15px rgba(244, 63, 94, 0.08)',
+                                                                 whiteSpace: 'nowrap'
                                                               }}
                                                            >
-                                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
                                                                  <Lock size={12} style={{ color: '#f43f5e', flexShrink: 0 }} />
                                                                  <span style={{ fontSize: '0.68rem', color: '#f43f5e', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Booked by</span>
                                                               </div>
