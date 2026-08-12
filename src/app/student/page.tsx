@@ -1728,18 +1728,18 @@ export default function StudentPortal() {
                                                                 justifyContent: 'space-between',
                                                                 width: '185px',
                                                                 minWidth: '185px',
-                                                                background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.18), rgba(16, 185, 129, 0.28))', 
-                                                                border: '1px solid rgba(52, 211, 153, 0.45)', 
+                                                                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(59, 130, 246, 0.3))', 
+                                                                border: '1px solid rgba(6, 182, 212, 0.45)', 
                                                                 borderRadius: '12px', 
                                                                 padding: '0.45rem 0.85rem', 
-                                                                boxShadow: '0 4px 15px rgba(52, 211, 153, 0.15)' 
+                                                                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.15)' 
                                                              }}
                                                           >
                                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                                <CheckCircle2 size={13} style={{ color: '#34d399', flexShrink: 0 }} />
-                                                                <span style={{ fontSize: '0.68rem', color: '#34d399', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>YOUR SLOT</span>
+                                                                <CheckCircle2 size={13} style={{ color: '#22d3ee', flexShrink: 0 }} />
+                                                                <span style={{ fontSize: '0.68rem', color: '#22d3ee', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>YOUR SLOT</span>
                                                              </div>
-                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(52, 211, 153, 0.4)' }} />
+                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(6, 182, 212, 0.4)' }} />
                                                              <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.05em' }}>
                                                                 {myGroup?.name || 'Squad'}
                                                              </span>
