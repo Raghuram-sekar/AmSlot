@@ -1675,8 +1675,9 @@ export default function StudentPortal() {
                                                 <div style={{ color: 'rgba(255,255,255,0.3)', padding: '3rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', fontSize: '0.9rem' }}>No slots for this date.</div>
                                              )}
                                              {filteredSlots.map((slot) => {
+                                                const isMySlot = slot.group_id === myGroup?.id;
                                                 const isAvailable = slot.status === 'AVAILABLE';
-                                                const isBookedByOthers = !isAvailable && slot.group_id !== myGroup?.id;
+                                                const isBookedByOthers = !isAvailable && !isMySlot;
                                                 const isLeader = myGroup?.leader_id === user.id;
                                                 const isSelected = selectedSlot === slot.id;
                                                 const myCurrentBooking = slots.find(sl => sl.group_id === myGroup?.id);
@@ -1718,7 +1719,32 @@ export default function StudentPortal() {
                                                       <div style={{ flex: 1 }} />
 
                                                       {/* Status badge */}
-                                                      {isBookedByOthers ? (
+                                                       {isMySlot ? (
+                                                          <div 
+                                                             title={`Your Reserved Slot: Booked by ${myGroup?.name || 'Your Squad'}`}
+                                                             style={{ 
+                                                                display: 'inline-flex', 
+                                                                alignItems: 'center', 
+                                                                justifyContent: 'space-between',
+                                                                width: '185px',
+                                                                minWidth: '185px',
+                                                                background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.18), rgba(16, 185, 129, 0.28))', 
+                                                                border: '1px solid rgba(52, 211, 153, 0.45)', 
+                                                                borderRadius: '12px', 
+                                                                padding: '0.45rem 0.85rem', 
+                                                                boxShadow: '0 4px 15px rgba(52, 211, 153, 0.15)' 
+                                                             }}
+                                                          >
+                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                                <CheckCircle2 size={13} style={{ color: '#34d399', flexShrink: 0 }} />
+                                                                <span style={{ fontSize: '0.68rem', color: '#34d399', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>YOUR SLOT</span>
+                                                             </div>
+                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(52, 211, 153, 0.4)' }} />
+                                                             <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.05em' }}>
+                                                                {myGroup?.name || 'Squad'}
+                                                             </span>
+                                                          </div>
+                                                       ) : isBookedByOthers ? (
                                                            <div 
                                                               title={`Public Reservation: Booked by ${slot.group_name || slot.groups?.name || 'Group'}`}
                                                               style={{ 
