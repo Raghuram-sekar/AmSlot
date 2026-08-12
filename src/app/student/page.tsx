@@ -1708,7 +1708,7 @@ export default function StudentPortal() {
                                                       onMouseOut={e => { e.currentTarget.style.background = bg; }}
                                                    >
                                                       {/* Time */}
-                                                      <div style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 900, color: isSelected ? '#fff' : isBookedByOthers ? 'rgba(255,255,255,0.85)' : isPastDate ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: '75px', lineHeight: 1 }}>
+                                                      <div style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.25rem', fontWeight: 900, color: isSelected ? '#fff' : isBookedByOthers ? 'rgba(255,255,255,0.85)' : isPastDate ? 'rgba(255,255,255,0.3)' : '#fff', minWidth: '65px', lineHeight: 1 }}>
                                                          {slot.start_time.substring(0, 5)}
                                                       </div>
 
