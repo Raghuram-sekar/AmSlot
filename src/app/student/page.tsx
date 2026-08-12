@@ -1550,9 +1550,27 @@ export default function StudentPortal() {
                            );
                         })()}
 
-                        {/* ── TIME BLOCK BOARD ── main slot view */}
-                        {events.length > 0 && !bookedSlot && slots.filter(sl => sl.status === 'AVAILABLE').length > 0 && (
-                           <div className="two-col-grid">
+                        {/* ── TIME BLOCK BOARD ── main slot view (ALWAYS VISIBLE FOR PUBLIC SCHEDULE) */}
+                        {events.length > 0 && (
+                           <div style={{ marginTop: bookedSlot ? '2.5rem' : 0 }}>
+                              {bookedSlot && (
+                                 <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', background: 'linear-gradient(145deg, rgba(20, 20, 30, 0.6), rgba(15, 15, 22, 0.8))', border: '1px solid rgba(139,92,246,0.18)', borderRadius: '24px', padding: '1.25rem 1.75rem', backdropFilter: 'blur(20px)' }}>
+                                    <div>
+                                       <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          <CalendarDays size={14} /> Live Public Schedule
+                                       </div>
+                                       <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)' }}>Full Class Presentation Timetable</h3>
+                                       <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', margin: '0.2rem 0 0 0' }}>Browse all dates and inspect reserved squad slots across the course.</p>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.4rem 0.875rem', borderRadius: '12px' }}>
+                                       <Users size={14} style={{ color: 'var(--primary)' }} />
+                                       <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
+                                          {slots.filter(s => s.status === 'BOOKED').length} / {slots.length} Slots Reserved
+                                       </span>
+                                    </div>
+                                 </div>
+                              )}
+                              <div className="two-col-grid">
 
                               <div>
                                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '0.75rem' }}>Select Day</div>
@@ -1774,6 +1792,7 @@ export default function StudentPortal() {
                                  )}
                               </div>
                            </div>
+                         </div>
                         )}
                      </div>
                   )}
