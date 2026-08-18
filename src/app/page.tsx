@@ -41,8 +41,16 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'prof' | 'student'>('prof');
 
   useEffect(() => {
-    // Avoid SSR hydration issues with a slight delay if necessary, or just true
     setTimeout(() => setMounted(true), 0);
+
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash;
+      if (hash.includes('error=access_denied') || hash.includes('error_code=otp_expired')) {
+        window.location.href = '/auth?error=expired_link';
+      } else if (hash.includes('type=recovery') || hash.includes('access_token')) {
+        window.location.href = `/auth${hash}`;
+      }
+    }
   }, []);
 
   return (

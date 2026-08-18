@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Hourglass, Mail, Lock, User, GraduationCap, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Hourglass, Mail, Lock, User, GraduationCap, ShieldCheck, ShieldAlert, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
@@ -13,8 +13,6 @@ const GoogleIcon = () => (
     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
   </svg>
 );
-
-
 
 export function isAmritaEmail(email: string): boolean {
   if (!email) return false;
@@ -30,14 +28,17 @@ export function isAmritaEmail(email: string): boolean {
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [authMode, setAuthMode] = useState<'PASSWORD' | 'MAGIC_LINK' | 'RESET_PASSWORD'>('PASSWORD');
+  const [authMode, setAuthMode] = useState<'PASSWORD' | 'FORGOT_PASSWORD' | 'UPDATE_PASSWORD'>('PASSWORD');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'STUDENT' | 'PROFESSOR'>('STUDENT');
   const [passcode, setPasscode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   
   // OTP Verification state
   const [otpStep, setOtpStep] = useState(false);
@@ -46,10 +47,38 @@ export default function AuthPage() {
 
   const router = useRouter();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('error') === 'expired_link') {
+        setError("Your magic link or password reset link has expired or was already opened by an automated email scanner. Please enter your email below to receive a fresh password reset link.");
+      }
+
+      const hash = window.location.hash;
+      if (hash.includes('error=access_denied') || hash.includes('error_code=otp_expired')) {
+        setError("Your email link has expired or was already used. Enter your email below to receive a new password reset link.");
+      } else if (hash.includes('type=recovery') || hash.includes('access_token')) {
+        setAuthMode('UPDATE_PASSWORD');
+      }
+    }
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthMode('UPDATE_PASSWORD');
+        setError(null);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMsg(null);
 
     try {
       if (isLogin) {
@@ -73,7 +102,7 @@ export default function AuthPage() {
           router.push('/student');
         }
       } else {
-        // Sign Up - Open to all emails (Amrita restriction removed)
+        // Sign Up
         const cleanEmail = email.trim().toLowerCase();
 
         // Check duplicate email in public.users
@@ -127,7 +156,7 @@ export default function AuthPage() {
           userId = authData.user.id;
         }
 
-        // Send 6-Digit OTP email directly to student Amrita inbox via Gmail SMTP API Route
+        // Send 6-Digit OTP email directly to Amrita inbox via API Route
         try {
           await fetch('/api/send-otp', {
             method: 'POST',
@@ -152,11 +181,75 @@ export default function AuthPage() {
           generatedOtp
         });
 
-        // Always mandate 6-digit OTP verification
         setOtpStep(true);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: redirectUrl
+      });
+      if (error) throw error;
+      setSuccessMsg(`Password recovery link sent to ${email}. Please check your inbox and spam folder.`);
+    } catch (err: any) {
+      setError(err.message || "Failed to send password recovery email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match. Please re-enter.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setSuccessMsg("Password updated successfully! Signing you in...");
+
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (userId) {
+        const { data: profile } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
+        setTimeout(() => {
+          if (profile?.role === 'PROFESSOR') {
+            router.push('/professor');
+          } else {
+            router.push('/student');
+          }
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          setAuthMode('PASSWORD');
+          setIsLogin(true);
+        }, 1500);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to update password. Link may have expired.");
     } finally {
       setLoading(false);
     }
@@ -177,10 +270,7 @@ export default function AuthPage() {
         })
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to resend email.");
-      }
-
+      if (!res.ok) throw new Error("Failed to resend email.");
       alert(`Verification code resent to ${pendingUser.email}. Please check your Amrita inbox and spam folder.`);
     } catch (err: any) {
       alert(`Re-sent verification code to ${pendingUser.email}.`);
@@ -196,16 +286,12 @@ export default function AuthPage() {
     setError(null);
 
     try {
-      // 1. Verify that student entered matching 6-digit code received in their Amrita email
       const isMatchingOtp = otpCode.trim() === pendingUser.generatedOtp;
-      
       if (!isMatchingOtp) {
         throw new Error("Invalid verification code. Please check your Amrita email inbox or click Resend Code.");
       }
 
       let activeUserId = pendingUser.id;
-
-      // 2. Sign in to create active authenticated session in browser
       if (pendingUser.password) {
         const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
           email: pendingUser.email,
@@ -213,14 +299,11 @@ export default function AuthPage() {
         });
 
         if (signInErr && signInErr.message.includes('Invalid login credentials')) {
-          // If first-time user record needs activation in auth.users
           const { data: signUpData } = await supabase.auth.signUp({
             email: pendingUser.email,
             password: pendingUser.password
           });
-          if (signUpData?.user) {
-            activeUserId = signUpData.user.id;
-          }
+          if (signUpData?.user) activeUserId = signUpData.user.id;
           await supabase.auth.signInWithPassword({
             email: pendingUser.email,
             password: pendingUser.password
@@ -230,13 +313,9 @@ export default function AuthPage() {
         }
       }
 
-      // 3. Fetch current logged in user ID
       const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user?.id) {
-        activeUserId = userData.user.id;
-      }
+      if (userData?.user?.id) activeUserId = userData.user.id;
 
-      // 4. Insert profile into public.users
       const { error: insertError } = await supabase
         .from('users')
         .insert([
@@ -253,7 +332,6 @@ export default function AuthPage() {
         console.warn("Profile insert notice:", insertError.message);
       }
 
-      // 5. Redirect user to their respective dashboard
       if (pendingUser.role === 'PROFESSOR') {
         router.push('/professor');
       } else {
@@ -314,10 +392,14 @@ export default function AuthPage() {
             </span>
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>
-            {otpStep ? 'Verify Amrita Email' : isLogin ? 'Welcome Back' : 'Create Account'}
+            {authMode === 'UPDATE_PASSWORD' ? 'Set New Password' : authMode === 'FORGOT_PASSWORD' ? 'Reset Password' : otpStep ? 'Verify Email' : isLogin ? 'Welcome Back' : 'Create Account'}
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '0.5rem', fontSize: '0.875rem', textAlign: 'center' }}>
-            {otpStep 
+            {authMode === 'UPDATE_PASSWORD' 
+              ? 'Enter a new secure password for your account'
+              : authMode === 'FORGOT_PASSWORD'
+              ? 'We will send a password reset link to your email'
+              : otpStep 
               ? `We sent a 6-digit OTP code to ${pendingUser?.email || 'your email'}`
               : isLogin ? 'Enter your credentials to access your workspace' : 'Join AmSlot to securely manage project reviews'}
           </p>
@@ -349,7 +431,104 @@ export default function AuthPage() {
           </div>
         )}
 
-        {otpStep ? (
+        {successMsg && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.85rem', 
+            background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(139, 92, 246, 0.08))', 
+            border: '1px solid rgba(52, 211, 153, 0.28)', 
+            borderLeft: '4px solid #34d399', 
+            color: '#a7f3d0', 
+            padding: '0.875rem 1.1rem', 
+            borderRadius: '12px', 
+            fontSize: '0.85rem', 
+            lineHeight: '1.4', 
+            marginBottom: '1.5rem'
+          }}>
+            <CheckCircle2 size={18} color="#34d399" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1, fontWeight: 500 }}>{successMsg}</div>
+          </div>
+        )}
+
+        {authMode === 'UPDATE_PASSWORD' ? (
+          <form onSubmit={handleUpdateNewPassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>New Password</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                <input 
+                  type="password" 
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 chars)" 
+                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Confirm New Password</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                <input 
+                  type="password" 
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password" 
+                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary pulse-glow" 
+              style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '0.5rem', opacity: loading ? 0.7 : 1 }}
+              disabled={loading}
+            >
+              {loading ? 'Updating Password...' : 'Save New Password & Sign In'}
+            </button>
+          </form>
+        ) : authMode === 'FORGOT_PASSWORD' ? (
+          <form onSubmit={handleSendPasswordReset} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Your Email Address</label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                <input 
+                  type="email" 
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="name@example.com" 
+                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 3rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--card-border)', borderRadius: '10px', color: '#fff', outline: 'none' }} 
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary pulse-glow" 
+              style={{ width: '100%', padding: '1rem', fontSize: '1rem', marginTop: '0.5rem', opacity: loading ? 0.7 : 1 }}
+              disabled={loading}
+            >
+              {loading ? 'Sending Recovery Link...' : 'Send Recovery Link'}
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => { setAuthMode('PASSWORD'); setError(null); setSuccessMsg(null); }}
+              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline', marginTop: '0.5rem', width: '100%', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+            >
+              <ArrowLeft size={14} /> Back to Sign In
+            </button>
+          </form>
+        ) : otpStep ? (
           <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -429,7 +608,18 @@ export default function AuthPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>Password</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)' }}>Password</label>
+                  {isLogin && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setAuthMode('FORGOT_PASSWORD'); setError(null); setSuccessMsg(null); }}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
                 <div style={{ position: 'relative' }}>
                   <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
                   <input 
@@ -517,7 +707,7 @@ export default function AuthPage() {
                  AmSlot v2.0.0 • Amrita Verified Identity
               </div>
               <button 
-                onClick={() => { setIsLogin(!isLogin); setError(null); }}
+                onClick={() => { setIsLogin(!isLogin); setError(null); setSuccessMsg(null); }}
                 style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline' }}
               >
                 {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
