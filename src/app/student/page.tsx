@@ -1675,18 +1675,25 @@ export default function StudentPortal() {
                                                 <div style={{ color: 'rgba(255,255,255,0.3)', padding: '3rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', fontSize: '0.9rem' }}>No slots for this date.</div>
                                              )}
                                              {filteredSlots.map((slot) => {
+                                                const slotTimeToCheck = slot.start_time.length === 5 ? `${slot.start_time}:00` : slot.start_time;
+                                                const n = new Date();
+                                                 const tDay = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+                                                 const tCur = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0') + ':00';
+                                                 const isTimePassedToday = activeDate === tDay && slotTimeToCheck <= tCur;
+                                                const isSlotExpired = isPastDate || isTimePassedToday;
+
                                                 const isMySlot = slot.group_id === myGroup?.id;
                                                 const isAvailable = slot.status === 'AVAILABLE';
                                                 const isBookedByOthers = !isAvailable && !isMySlot;
                                                 const isLeader = myGroup?.leader_id === user.id;
                                                 const isSelected = selectedSlot === slot.id;
                                                 const myCurrentBooking = slots.find(sl => sl.group_id === myGroup?.id);
-                                                const canSelect = isAvailable && isLeader && !isPastDate && slot.id !== myCurrentBooking?.id;
+                                                const canSelect = isAvailable && isLeader && !isSlotExpired && slot.id !== myCurrentBooking?.id;
 
                                                 let leftBorder = 'rgba(255,255,255,0.06)';
                                                 let bg = 'rgba(255,255,255,0.02)';
                                                 if (isBookedByOthers) { leftBorder = 'rgba(244,63,94,0.4)'; bg = 'rgba(244,63,94,0.03)'; }
-                                                else if (isPastDate) { leftBorder = 'rgba(251,191,36,0.2)'; bg = 'rgba(251,191,36,0.02)'; }
+                                                else if (isSlotExpired) { leftBorder = 'rgba(251,191,36,0.2)'; bg = 'rgba(251,191,36,0.02)'; }
                                                 else if (isSelected) { leftBorder = 'var(--primary)'; bg = 'rgba(139,92,246,0.08)'; }
                                                 else if (isAvailable && !isSelected) { leftBorder = 'rgba(52,211,153,0.3)'; }
 
@@ -1773,7 +1780,7 @@ export default function StudentPortal() {
                                                                  {slot.group_name || slot.groups?.name || 'Group'}
                                                               </span>
                                                            </div>
-                                                        ) : isPastDate ? (
+                                                        ) : isSlotExpired ? (
                                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.3rem 0.75rem', color: '#fbbf24', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                                                              <History size={10} /> Archived
                                                           </div>
