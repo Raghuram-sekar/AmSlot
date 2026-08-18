@@ -1581,19 +1581,37 @@ export default function StudentPortal() {
                                      const todayStr = new Date().toISOString().split('T')[0];
                                      const isPast = ev.date < todayStr;
                                      const slotsOnDay = slots.filter(s => events.find(e => e.id === s.event_id)?.date === ev.date);
-                                     const availableCount = slotsOnDay.filter(s => s.status === 'AVAILABLE').length;
+                                     const now = new Date();
+                                      const yr = now.getFullYear();
+                                      const mo = String(now.getMonth() + 1).padStart(2, '0');
+                                      const dy = String(now.getDate()).padStart(2, '0');
+                                      const todayFormatted = `${yr}-${mo}-${dy}`;
+                                      const curH = String(now.getHours()).padStart(2, '0');
+                                      const curM = String(now.getMinutes()).padStart(2, '0');
+                                      const curTimeFormatted = `${curH}:${curM}:00`;
+
+                                      const availableCount = slotsOnDay.filter(s => {
+                                         if (s.status !== 'AVAILABLE') return false;
+                                         if (ev.date < todayFormatted) return false;
+                                         if (ev.date === todayFormatted) {
+                                            const timeToCheck = s.start_time.length === 5 ? `${s.start_time}:00` : s.start_time;
+                                            return timeToCheck > curTimeFormatted;
+                                         }
+                                         return true;
+                                      }).length;
+                                      const isDayFullyExpiredOrPassed = isPast || (ev.date === todayFormatted && availableCount === 0 && slotsOnDay.length > 0);
                                      return (
                                         <button key={ev.id} onClick={() => { setActiveDate(ev.date); setSelectedSlot(null); }}
                                            style={{
                                               padding: '0.875rem 0.75rem', borderRadius: '18px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s',
                                               width: '90px', minWidth: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                              background: isActive ? (isPast ? 'linear-gradient(135deg, #d97706, #b45309)' : 'linear-gradient(135deg, var(--primary), #6d28d9)') : (isPast ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.03)'),
-                                              border: `1px solid ${isActive ? 'transparent' : isPast ? 'rgba(251,191,36,0.18)' : 'rgba(255,255,255,0.06)'}`,
-                                              boxShadow: isActive ? (isPast ? '0 8px 20px rgba(217,119,6,0.35)' : '0 8px 20px rgba(139,92,246,0.35)') : 'none',
+                                              background: isActive ? (isDayFullyExpiredOrPassed ? 'linear-gradient(135deg, #d97706, #b45309)' : 'linear-gradient(135deg, var(--primary), #6d28d9)') : (isDayFullyExpiredOrPassed ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.03)'),
+                                              border: `1px solid ${isActive ? 'transparent' : isDayFullyExpiredOrPassed ? 'rgba(251,191,36,0.18)' : 'rgba(255,255,255,0.06)'}`,
+                                              boxShadow: isActive ? (isDayFullyExpiredOrPassed ? '0 8px 20px rgba(217,119,6,0.35)' : '0 8px 20px rgba(139,92,246,0.35)') : 'none',
                                               transform: isActive ? 'scale(1.04)' : 'scale(1)',
                                            }}
                                         >
-                                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.8)' : isPast ? '#fbbf24' : 'rgba(255,255,255,0.3)', marginBottom: '0.2rem' }}>
+                                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.08em', color: isActive ? 'rgba(255,255,255,0.8)' : isDayFullyExpiredOrPassed ? '#fbbf24' : 'rgba(255,255,255,0.3)', marginBottom: '0.2rem' }}>
                                               {d.toLocaleDateString('en-US', { weekday: 'short' })}
                                            </div>
                                            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', lineHeight: 1, fontFamily: 'var(--font-outfit)' }}>{d.getDate()}</div>
