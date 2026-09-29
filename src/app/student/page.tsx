@@ -521,22 +521,25 @@ export default function StudentPortal() {
     }, [viewState, activeProject?.id, activeCourseId]);
 
    const reloadSlots = async () => {
-      if (!activeProject || !activeCourseId) return;
+      if (!activeProject) return;
       const { data: evData } = await supabase.from('events').select('id').eq('project_id', activeProject.id);
       if (!evData || evData.length === 0) return;
       const evIds = evData.map((e: any) => e.id);
-      const [slRes, grpRes] = await Promise.all([
-         supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true }),
-         supabase.from('groups').select('id, name').eq('course_id', activeCourseId)
-      ]);
-      const groupMap = new Map((grpRes.data || []).map((g: any) => [g.id, g.name]));
-      if (slRes.data) {
-         const enriched = slRes.data.map((s: any) => ({
-            ...s,
-            group_name: s.groups?.name || (s.group_id ? groupMap.get(s.group_id) : null)
-         }));
-         setSlots(enriched);
+      const { data: slData } = await supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true });
+      if (!slData) return;
+
+      const groupIds = slData.map((s: any) => s.group_id).filter(Boolean);
+      let groupMap = new Map();
+      if (groupIds.length > 0) {
+         const { data: grpData } = await supabase.from('groups').select('id, name').in('id', groupIds);
+         groupMap = new Map((grpData || []).map((g: any) => [g.id, g.name]));
       }
+
+      const enriched = slData.map((s: any) => ({
+         ...s,
+         group_name: s.groups?.name || (s.group_id ? groupMap.get(s.group_id) : null)
+      }));
+      setSlots(enriched);
    };
 
     useEffect(() => {
@@ -694,13 +697,16 @@ export default function StudentPortal() {
          setEvents(evData);
          setActiveDate(evData[0].date);
          const evIds = evData.map((e: any) => e.id);
-         const [slRes, grpRes] = await Promise.all([
-            supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true }),
-            activeCourseId ? supabase.from('groups').select('id, name').eq('course_id', activeCourseId) : Promise.resolve({ data: [] })
-         ]);
-         const groupMap = new Map((grpRes.data || []).map((g: any) => [g.id, g.name]));
-         if (slRes.data) {
-            const enriched = slRes.data.map((s: any) => ({
+         const { data: slData } = await supabase.from('slots').select('*, groups(id, name)').in('event_id', evIds).order('start_time', { ascending: true });
+         if (slData) {
+            const groupIds = slData.map((s: any) => s.group_id).filter(Boolean);
+            let groupMap = new Map();
+            if (groupIds.length > 0) {
+               const { data: grpData } = await supabase.from('groups').select('id, name').in('id', groupIds);
+               groupMap = new Map((grpData || []).map((g: any) => [g.id, g.name]));
+            }
+
+            const enriched = slData.map((s: any) => ({
                ...s,
                group_name: s.groups?.name || (s.group_id ? groupMap.get(s.group_id) : null)
             }));
@@ -1773,7 +1779,7 @@ export default function StudentPortal() {
                                                           </div>
                                                        ) : isBookedByOthers ? (
                                                            <div 
-                                                              title={`Public Reservation: Booked by ${slot.group_name || slot.groups?.name || 'Group'}`}
+                                                              title={`Public Reservation: Booked by ${slot.group_name || slot.groups?.name || (slot.group_id ? `Team ${slot.group_id.substring(0, 4).toUpperCase()}` : 'Group')}`}
                                                               style={{ 
                                                                  display: 'inline-flex', 
                                                                  alignItems: 'center', 
@@ -1795,7 +1801,7 @@ export default function StudentPortal() {
                                                               </div>
                                                               <div style={{ width: '1px', height: '14px', background: 'rgba(244, 63, 94, 0.35)' }} />
                                                               <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.05em' }}>
-                                                                 {slot.group_name || slot.groups?.name || 'Group'}
+                                                                 {slot.group_name || slot.groups?.name || (slot.group_id ? `Team ${slot.group_id.substring(0, 4).toUpperCase()}` : 'Group')}
                                                               </span>
                                                            </div>
                                                         ) : isSlotExpired ? (
