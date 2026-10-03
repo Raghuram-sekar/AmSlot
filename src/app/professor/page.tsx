@@ -636,7 +636,7 @@ export default function ProfessorDashboard() {
         return;
      }
 
-     showToast("Generating Excel export with squad details...", "info");
+     showToast("Generating Excel export with group details...", "info");
 
      // Fetch full group details including student members & roll numbers for the course
      let groupDetailsMap = new Map<string, { leader: string; members: string[] }>();
@@ -680,10 +680,10 @@ export default function ProfessorDashboard() {
         "Start Time",
         "End Time",
         "Assignment",
-        "Squad Name",
+        "Group Name",
         "Booking Status",
-        "Squad Leader",
-        "Squad Members",
+        "Group Leader",
+        "Group Members",
         "Member Count",
         "Evaluation Score",
         "Evaluation Notes"
@@ -2381,7 +2381,7 @@ const CourseSkeleton = () => (
                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.85rem', background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)', color: '#c4b5fd', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '0.08em' }}>
                       <Clock size={13} /> {manageSlot.event_date} • {manageSlot.start_time.substring(0,5)} - {manageSlot.end_time.substring(0,5)}
                    </div>
-                   <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}>{manageSlot.groups?.name || 'Unassigned Squad'}</h2>
+                   <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', margin: 0, fontFamily: 'var(--font-outfit)', letterSpacing: '-0.02em' }}>{manageSlot.groups?.name || 'Unassigned Group'}</h2>
                 </div>
                 <button onClick={() => setManageSlot(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', width: '42px', height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseOver={e=>{e.currentTarget.style.background='rgba(244,63,94,0.15)'; e.currentTarget.style.color='#f43f5e';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)'; e.currentTarget.style.color='rgba(255,255,255,0.7)';}}>
                    <X size={20} />
@@ -2509,7 +2509,7 @@ const CourseSkeleton = () => (
                           </div>
 
                           {professorSlotFiles.length === 0 ? (
-                             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '2rem 0', textAlign: 'center' }}>No submission documents attached by squad yet.</div>
+                             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', padding: '2rem 0', textAlign: 'center' }}>No submission documents attached by group yet.</div>
                           ) : (
                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                                 {professorSlotFiles.map(file => {
