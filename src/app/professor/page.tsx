@@ -630,6 +630,116 @@ export default function ProfessorDashboard() {
     setManageSaving(false);
   };
 
+    const downloadSlotBookingsExcel = async () => {
+     if (filteredScheduleSlots.length === 0) {
+        showToast("No slot bookings found to export", "error");
+        return;
+     }
+
+     showToast("Generating Excel export with squad details...", "info");
+
+     // Fetch full group details including student members & roll numbers for the course
+     let groupDetailsMap = new Map<string, { leader: string; members: string[] }>();
+     if (activeCourseId) {
+        const { data: grpData } = await supabase
+           .from('groups')
+           .select('id, name, leader_id, group_members(student_id, users(full_name, roll_number))')
+           .eq('course_id', activeCourseId);
+
+        if (grpData) {
+           grpData.forEach((g: any) => {
+              let leaderName = '';
+              const memberStrings: string[] = [];
+              g.group_members?.forEach((m: any) => {
+                 const u = m.users;
+                 const name = u?.full_name || 'Student';
+                 const roll = formatFullRollNumber(u?.roll_number);
+                 const str = roll !== 'N/A' ? `${name} (${roll})` : name;
+                 if (m.student_id === g.leader_id) {
+                    leaderName = str;
+                 }
+                 memberStrings.push(str);
+              });
+              groupDetailsMap.set(g.id, {
+                 leader: leaderName || (memberStrings[0] || 'N/A'),
+                 members: memberStrings
+              });
+           });
+        }
+     }
+
+     // Sort slots by event date, then by start time
+     const sortedSlots = [...filteredScheduleSlots].sort((a, b) => {
+        if (a.event_date !== b.event_date) return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
+        return a.start_time.localeCompare(b.start_time);
+     });
+
+     const headers = [
+        "Date",
+        "Day",
+        "Start Time",
+        "End Time",
+        "Assignment",
+        "Squad Name",
+        "Booking Status",
+        "Squad Leader",
+        "Squad Members",
+        "Member Count",
+        "Evaluation Score",
+        "Evaluation Notes"
+     ];
+
+     const rows = sortedSlots.map(s => {
+        const d = s.event_date ? new Date(s.event_date + 'T00:00:00') : null;
+        const dayName = d ? d.toLocaleDateString('en-US', { weekday: 'long' }) : 'N/A';
+        const dateStr = s.event_date || 'N/A';
+        const startTime = s.start_time ? s.start_time.substring(0, 5) : '';
+        const endTime = s.end_time ? s.end_time.substring(0, 5) : '';
+        const proj = projects.find(p => p.id === s.project_id);
+        const assignmentTitle = s.event_title || proj?.title || 'Review Meeting';
+        const groupName = s.groups?.name || (s.status === 'AVAILABLE' ? 'OPEN / AVAILABLE' : 'Unassigned');
+        const grpDetails = s.group_id ? groupDetailsMap.get(s.group_id) : null;
+        const leader = grpDetails?.leader || (s.status === 'AVAILABLE' ? '-' : 'N/A');
+        const membersJoined = grpDetails?.members?.join("; ") || (s.status === 'AVAILABLE' ? '-' : 'None');
+        const memberCount = grpDetails?.members?.length || 0;
+        const grade = s.grade || (s.status === 'PRESENTED' ? 'Graded' : '-');
+        const notes = (s.private_notes || '').replace(/"/g, '""');
+
+        return [
+           `"${dateStr}"`,
+           `"${dayName}"`,
+           `"${startTime}"`,
+           `"${endTime}"`,
+           `"${assignmentTitle.replace(/"/g, '""')}"`,
+           `"${groupName.replace(/"/g, '""')}"`,
+           `"${s.status}"`,
+           `"${leader.replace(/"/g, '""')}"`,
+           `"${membersJoined.replace(/"/g, '""')}"`,
+           memberCount,
+           `"${grade}"`,
+           `"${notes}"`
+        ];
+     });
+
+     // Prepend UTF-8 BOM so Microsoft Excel automatically opens with correct formatting & characters
+     const csvContent = "\uFEFF" + [headers.map(h => `"${h}"`).join(","), ...rows.map(r => r.join(","))].join("\r\n");
+     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+     const url = URL.createObjectURL(blob);
+     const link = document.createElement("a");
+     link.setAttribute("href", url);
+
+     const courseCleanName = activeCourse?.name?.replace(/[^a-zA-Z0-9]/g, '_') || 'Course';
+     const sectionCleanName = activeCourse?.section?.replace(/[^a-zA-Z0-9]/g, '_') || '';
+     const projFilterName = filterProjectId !== 'ALL' ? `_${projects.find(p => p.id === filterProjectId)?.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Assignment'}` : '';
+
+     link.setAttribute("download", `AmSlot_Bookings_${courseCleanName}_${sectionCleanName}${projFilterName}.csv`);
+     link.style.visibility = 'hidden';
+     document.body.appendChild(link);
+     link.click();
+     document.body.removeChild(link);
+     showToast("Slot bookings exported cleanly to Excel (CSV)!", "success");
+  };
+
   const downloadGradeRegistryCSV = () => {
      if (filteredScheduleSlots.length === 0) {
         showToast("No data to export", "error");
@@ -1055,41 +1165,68 @@ const CourseSkeleton = () => (
                         <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem', maxWidth: '600px' }}>Your central overview covering all slots inside this active workspace.</p>
                       </div>
                       
-                      {/* Assignment Filter Selector Dropdown */}
-                      {projects.length > 0 && (
-                         <div style={{ position: 'relative', minWidth: '220px' }}>
-                            <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
-                               <BookOpen size={16} />
+                      {/* Controls: Assignment Filter + Export to Excel */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flexWrap: 'wrap' }}>
+                         {projects.length > 0 && (
+                            <div style={{ position: 'relative', minWidth: '220px' }}>
+                               <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                                  <BookOpen size={16} />
+                               </div>
+                               <select 
+                                  value={filterProjectId} 
+                                  onChange={(e) => setFilterProjectId(e.target.value)}
+                                  style={{ 
+                                     width: '100%',
+                                     padding: '0.875rem 2.5rem 0.875rem 2.5rem', 
+                                     background: 'rgba(255,255,255,0.03)', 
+                                     border: '1px solid rgba(255,255,255,0.08)', 
+                                     borderRadius: '14px', 
+                                     color: '#fff', 
+                                     outline: 'none', 
+                                     fontWeight: 700, 
+                                     fontSize: '0.9rem', 
+                                     cursor: 'pointer',
+                                     appearance: 'none',
+                                     transition: 'all 0.2s',
+                                     boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                                  }}
+                               >
+                                  <option value="ALL" style={{ background: '#120d1d', color: '#fff' }}>All Assignments</option>
+                                  {projects.map(p => (
+                                     <option key={p.id} value={p.id} style={{ background: '#120d1d', color: '#fff' }}>{p.title}</option>
+                                  ))}
+                               </select>
+                               <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }}>
+                                  <ChevronDown size={16} />
+                               </div>
                             </div>
-                            <select 
-                               value={filterProjectId} 
-                               onChange={(e) => setFilterProjectId(e.target.value)}
-                               style={{ 
-                                  width: '100%',
-                                  padding: '0.875rem 2.5rem 0.875rem 2.5rem', 
-                                  background: 'rgba(255,255,255,0.03)', 
-                                  border: '1px solid rgba(255,255,255,0.08)', 
-                                  borderRadius: '14px', 
-                                  color: '#fff', 
-                                  outline: 'none', 
-                                  fontWeight: 700, 
-                                  fontSize: '0.9rem', 
-                                  cursor: 'pointer',
-                                  appearance: 'none',
-                                  transition: 'all 0.2s',
-                                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-                               }}
-                            >
-                               <option value="ALL" style={{ background: '#120d1d', color: '#fff' }}>All Assignments</option>
-                               {projects.map(p => (
-                                  <option key={p.id} value={p.id} style={{ background: '#120d1d', color: '#fff' }}>{p.title}</option>
-                               ))}
-                            </select>
-                            <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }}>
-                               <ChevronDown size={16} />
-                            </div>
-                         </div>
-                      )}
+                         )}
+
+                         <button
+                            onClick={downloadSlotBookingsExcel}
+                            title="Export all presentation slots and bookings to Excel (CSV)"
+                            style={{
+                               display: 'inline-flex',
+                               alignItems: 'center',
+                               gap: '0.6rem',
+                               padding: '0.875rem 1.4rem',
+                               background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.28))',
+                               border: '1px solid rgba(52, 211, 153, 0.45)',
+                               borderRadius: '14px',
+                               color: '#34d399',
+                               fontWeight: 800,
+                               fontSize: '0.9rem',
+                               cursor: 'pointer',
+                               transition: 'all 0.2s',
+                               boxShadow: '0 4px 15px rgba(16, 185, 129, 0.15)',
+                               whiteSpace: 'nowrap'
+                            }}
+                            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                         >
+                            <Download size={17} /> Export to Excel
+                         </button>
+                      </div>
                     </header>
 
                     {scheduleLoading ? (
