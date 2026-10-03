@@ -101,6 +101,7 @@ AS $$
 DECLARE
   v_slot_status TEXT;
   v_event_id UUID;
+  v_project_id UUID;
   v_group_course_id UUID;
   v_event_course_id UUID;
 BEGIN
@@ -117,18 +118,19 @@ BEGIN
 
   -- 3) Security/Data Integrity Check: Does the group actually belong to this course?
   SELECT course_id INTO v_group_course_id FROM public.groups WHERE id = p_group_id;
-  SELECT p.course_id INTO v_event_course_id FROM public.events e JOIN public.projects p ON e.project_id = p.id WHERE e.id = v_event_id;
+  SELECT p.id, p.course_id INTO v_project_id, v_event_course_id FROM public.events e JOIN public.projects p ON e.project_id = p.id WHERE e.id = v_event_id;
   
   IF v_group_course_id != v_event_course_id THEN
     RAISE EXCEPTION 'Security Error: This group does not belong to the course this slot is for.';
     RETURN FALSE;
   END IF;
 
-  -- 4) Release any previous slot booked by this group for this specific review event/project!
-  -- This allows safe rebooking/rescheduling atomically.
+  -- 4) Release any previous slot booked by this group for this ENTIRE review project/assignment!
+  -- This ensures a squad never holds multiple slots across multiple days for the same assignment.
   UPDATE public.slots 
   SET group_id = NULL, status = 'AVAILABLE'
-  WHERE event_id = v_event_id AND group_id = p_group_id;
+  WHERE event_id IN (SELECT id FROM public.events WHERE project_id = v_project_id)
+    AND group_id = p_group_id;
 
   -- 5) Book the slot atomically
   UPDATE public.slots 
@@ -139,7 +141,7 @@ BEGIN
 END;
 $$;
 
--- 10b. Helper RPC function to release a booked slot
+-- 10b. Helper RPC function to release all booked slots for a group
 CREATE OR REPLACE FUNCTION public.release_slot(p_group_id UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -149,6 +151,21 @@ BEGIN
   UPDATE public.slots 
   SET group_id = NULL, status = 'AVAILABLE'
   WHERE group_id = p_group_id;
+
+  RETURN TRUE;
+END;
+$$;
+
+-- 10c. Helper RPC function to release a single specific booked slot
+CREATE OR REPLACE FUNCTION public.release_specific_slot(p_slot_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.slots 
+  SET group_id = NULL, status = 'AVAILABLE'
+  WHERE id = p_slot_id;
 
   RETURN TRUE;
 END;

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
    CalendarDays, Users, CheckCircle2, Lock, ArrowRight, Hourglass, UserPlus,
    Clock, ArrowLeft, ChevronRight, Hash, LogOut, XOctagon, ListOrdered,
-   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil, History,
+   Calendar as CalendarIcon, RotateCcw, Copy, Check, Sparkles, Zap, Shield, Menu, X, Pencil, History, AlertTriangle,
    FileText, UploadCloud, Link as LinkIcon, Trash2, ExternalLink, FileCode, Paperclip, Download, FolderUp, Upload
 } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
@@ -314,6 +314,38 @@ export default function StudentPortal() {
         setEditProfileSaving(false);
      };
 
+    const handleCancelSpecificSlot = async (slotToCancel: any) => {
+       if (!slotToCancel || !myGroup) return;
+       const slotEv = events.find(e => e.id === slotToCancel.event_id);
+       const dateFormatted = slotEv ? new Date(slotEv.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '';
+
+       setConfirmModal({
+          isOpen: true,
+          title: "Release / Cancel Slot",
+          message: `Are you sure you want to cancel and release your reserved slot on ${dateFormatted} at ${slotToCancel.start_time.substring(0, 5)}? This will open the slot for other squads.`,
+          confirmLabel: "Cancel Slot",
+          danger: true,
+          onConfirm: async () => {
+             // 1. Try RPC release_specific_slot first
+             let { error } = await supabase.rpc('release_specific_slot', { p_slot_id: slotToCancel.id });
+             if (error) {
+                // 2. Client-side direct update
+                const res = await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('id', slotToCancel.id);
+                error = res.error;
+             }
+             if (!error) {
+                setSlots(prev => prev.map(s => s.id === slotToCancel.id ? { ...s, status: 'AVAILABLE', group_id: null } : s));
+                setSelectedSlot(null);
+                reloadSlots();
+                showToast("Slot cancelled and released successfully!", "success");
+             } else {
+                showToast("Error releasing slot: " + error.message, "error");
+             }
+             setConfirmModal(null);
+          }
+       });
+    };
+
     const handleCancelBooking = async () => {
        const myCurrentBooking = slots.find(s => s.group_id === myGroup?.id);
        if (!myCurrentBooking || !myGroup) return;
@@ -334,6 +366,7 @@ export default function StudentPortal() {
              if (!error) {
                 setSlots(prev => prev.map(s => s.id === myCurrentBooking.id ? { ...s, status: 'AVAILABLE', group_id: null } : s));
                 setSelectedSlot(null);
+                reloadSlots();
                 showToast("Slot released! Please select your new review date and time.", "success");
              } else {
                 showToast("Error releasing slot: " + error.message, "error");
@@ -749,6 +782,15 @@ export default function StudentPortal() {
       }
 
       setBookingLoading(true);
+
+      // Explicitly release any other existing slots booked by this team across the project to guarantee single-slot rebooking!
+      const currentBookedSlots = slots.filter(s => s.group_id === myGroup.id && s.id !== selectedSlot);
+      if (currentBookedSlots.length > 0) {
+         for (const oldBooking of currentBookedSlots) {
+            await supabase.from('slots').update({ status: 'AVAILABLE', group_id: null }).eq('id', oldBooking.id);
+         }
+      }
+
       const { error: rpcError } = await supabase.rpc('book_slot', { p_slot_id: selectedSlot, p_group_id: myGroup.id });
       if (rpcError) {
          showToast("Booking Rejected: " + rpcError.message, "error");
@@ -761,6 +803,7 @@ export default function StudentPortal() {
          const { data: slData } = await supabase.from('slots').select('*').in('event_id', evIds).order('start_time', { ascending: true });
          if (slData) setSlots(slData);
          setSelectedSlot(null);
+         reloadSlots();
          showToast("Slot secured! Your team is booked.", "success");
       }
       setBookingLoading(false);
@@ -1559,6 +1602,42 @@ export default function StudentPortal() {
                         {/* ── TIME BLOCK BOARD ── main slot view (ALWAYS VISIBLE FOR PUBLIC SCHEDULE) */}
                         {events.length > 0 && (
                            <div style={{ marginTop: bookedSlot ? '2.5rem' : 0 }}>
+                               {(() => {
+                                  const myMultipleSlots = slots.filter(s => s.group_id === myGroup?.id);
+                                  if (myMultipleSlots.length > 1 && myGroup?.leader_id === user.id) {
+                                     return (
+                                        <div className="animate-fade-in" style={{
+                                           background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(185, 28, 28, 0.05))',
+                                           border: '1px solid rgba(239, 68, 68, 0.35)',
+                                           borderLeft: '4px solid #ef4444',
+                                           borderRadius: '16px',
+                                           padding: '1.1rem 1.5rem',
+                                           marginBottom: '1.25rem',
+                                           display: 'flex',
+                                           alignItems: 'center',
+                                           justifyContent: 'space-between',
+                                           flexWrap: 'wrap',
+                                           gap: '1rem',
+                                           boxShadow: '0 8px 25px rgba(239, 68, 68, 0.15)'
+                                        }}>
+                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                                              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                                                 <AlertTriangle size={20} />
+                                              </div>
+                                              <div>
+                                                 <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#fff' }}>
+                                                    Multiple Reserved Slots Detected ({myMultipleSlots.length} Slots Held)
+                                                 </div>
+                                                 <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.65)', marginTop: '0.2rem' }}>
+                                                    Each squad may only hold 1 presentation slot for this assignment. Click the red <strong>Cancel Slot</strong> button next to any extra slots below to release them for other teams.
+                                                 </div>
+                                              </div>
+                                           </div>
+                                        </div>
+                                     );
+                                  }
+                                  return null;
+                               })()}
                               {bookedSlot && (
                                  <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', background: 'linear-gradient(145deg, rgba(20, 20, 30, 0.6), rgba(15, 15, 22, 0.8))', border: '1px solid rgba(139,92,246,0.18)', borderRadius: '24px', padding: '1.25rem 1.75rem', backdropFilter: 'blur(20px)' }}>
                                     <div>
@@ -1751,33 +1830,62 @@ export default function StudentPortal() {
 
                                                       {/* Status badge */}
                                                        {isMySlot ? (
-                                                          <div 
-                                                             title={`Your Reserved Slot: Booked by ${myGroup?.name || 'Your Squad'}`}
-                                                             style={{ 
-                                                                display: 'inline-flex', 
-                                                                alignItems: 'center', 
-                                                                justifyContent: 'space-between',
-                                                                gap: '0.5rem',
-                                                                minWidth: '170px',
-                                                                maxWidth: '220px',
-                                                                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(59, 130, 246, 0.3))', 
-                                                                border: '1px solid rgba(6, 182, 212, 0.45)', 
-                                                                borderRadius: '12px', 
-                                                                padding: '0.42rem 0.8rem', 
-                                                                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.15)',
-                                                                whiteSpace: 'nowrap'
-                                                             }}
-                                                          >
-                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                                                                <CheckCircle2 size={13} style={{ color: '#22d3ee', flexShrink: 0 }} />
-                                                                <span style={{ fontSize: '0.66rem', color: '#22d3ee', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>YOUR SLOT</span>
-                                                             </div>
-                                                             <div style={{ width: '1px', height: '14px', background: 'rgba(6, 182, 212, 0.4)', flexShrink: 0 }} />
-                                                             <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>
-                                                                {myGroup?.name || 'Squad'}
-                                                             </span>
-                                                          </div>
-                                                       ) : isBookedByOthers ? (
+                                                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                                                              <div 
+                                                                 title={`Your Reserved Slot: Booked by ${myGroup?.name || 'Your Squad'}`}
+                                                                 style={{ 
+                                                                    display: 'inline-flex', 
+                                                                    alignItems: 'center', 
+                                                                    justifyContent: 'space-between',
+                                                                    gap: '0.5rem',
+                                                                    minWidth: '160px',
+                                                                    background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(59, 130, 246, 0.3))', 
+                                                                    border: '1px solid rgba(6, 182, 212, 0.45)', 
+                                                                    borderRadius: '12px', 
+                                                                    padding: '0.42rem 0.8rem', 
+                                                                    boxShadow: '0 4px 15px rgba(6, 182, 212, 0.15)',
+                                                                    whiteSpace: 'nowrap'
+                                                                 }}
+                                                              >
+                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                                                                    <CheckCircle2 size={13} style={{ color: '#22d3ee', flexShrink: 0 }} />
+                                                                    <span style={{ fontSize: '0.66rem', color: '#22d3ee', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>YOUR SLOT</span>
+                                                                 </div>
+                                                                 <div style={{ width: '1px', height: '14px', background: 'rgba(6, 182, 212, 0.4)', flexShrink: 0 }} />
+                                                                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#fff', fontFamily: 'var(--font-outfit)', letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>
+                                                                    {myGroup?.name || 'Squad'}
+                                                                 </span>
+                                                              </div>
+                                                              {myGroup.leader_id === user.id && (
+                                                                 <button
+                                                                    onClick={(e) => {
+                                                                       e.stopPropagation();
+                                                                       handleCancelSpecificSlot(slot);
+                                                                    }}
+                                                                    title="Cancel / Release this slot"
+                                                                    style={{
+                                                                       display: 'inline-flex',
+                                                                       alignItems: 'center',
+                                                                       gap: '0.3rem',
+                                                                       background: 'rgba(244, 63, 94, 0.14)',
+                                                                       border: '1px solid rgba(244, 63, 94, 0.4)',
+                                                                       borderRadius: '10px',
+                                                                       padding: '0.42rem 0.7rem',
+                                                                       color: '#f43f5e',
+                                                                       fontSize: '0.72rem',
+                                                                       fontWeight: 800,
+                                                                       cursor: 'pointer',
+                                                                       transition: 'all 0.15s',
+                                                                       whiteSpace: 'nowrap'
+                                                                    }}
+                                                                    onMouseOver={e => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.28)'}
+                                                                    onMouseOut={e => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.14)'}
+                                                                 >
+                                                                    <X size={12} /> Cancel Slot
+                                                                 </button>
+                                                              )}
+                                                           </div>
+                                                        ) : isBookedByOthers ? (
                                                            <div 
                                                               title={`Public Reservation: Booked by ${slot.group_name || slot.groups?.name || (slot.group_id ? `Team ${slot.group_id.substring(0, 4).toUpperCase()}` : 'Group')}`}
                                                               style={{ 
@@ -1826,27 +1934,50 @@ export default function StudentPortal() {
                                   </div>
 
                                   {/* Lock Slot CTA inside Right Column */}
-                                  {selectedSlot && myGroup.leader_id === user.id && (() => {
-                                     const hasBooking = slots.some(sl => sl.group_id === myGroup.id);
-                                     return (
-                                        <div className="animate-scale-in" style={{ marginTop: '1.25rem', padding: '1.25rem 1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.12), rgba(139,92,246,0.04))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
-                                           <div>
-                                              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '0.2rem' }}>{hasBooking ? 'Need to reschedule?' : 'Ready to commit?'}</div>
-                                              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>{hasBooking ? 'Release old slot and book this one' : `Lock in this slot for ${myGroup.name}`}</div>
-                                           </div>
-                                           <button onClick={handleBookSlot} disabled={bookingLoading}
-                                              style={{ padding: '0.75rem 1.75rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(139,92,246,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
-                                              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                              onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-                                           >
-                                              {bookingLoading ? <Hourglass size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={15} />}
-                                              {bookingLoading ? 'Securing...' : hasBooking ? 'Reschedule Slot' : 'Lock Slot'}
-                                           </button>
-                                        </div>
-                                     );
-                                  })()}
+                                   {selectedSlot && myGroup.leader_id === user.id && (() => {
+                                      const hasBooking = slots.some(sl => sl.group_id === myGroup.id);
+                                      const handleConfirmReschedule = () => {
+                                         if (hasBooking) {
+                                            const existingSlot = slots.find(s => s.group_id === myGroup.id);
+                                            const existingEv = existingSlot ? events.find(e => e.id === existingSlot.event_id) : null;
+                                            const targetSlot = slots.find(s => s.id === selectedSlot);
+                                            const targetEv = targetSlot ? events.find(e => e.id === targetSlot.event_id) : null;
 
-                                 {selectedSlot && myGroup.leader_id !== user.id && (
+                                            const oldDesc = existingEv ? `${existingEv.date} at ${existingSlot?.start_time.substring(0, 5)}` : 'your current slot';
+                                            const newDesc = targetEv ? `${targetEv.date} at ${targetSlot?.start_time.substring(0, 5)}` : 'this new slot';
+
+                                            setConfirmModal({
+                                               isOpen: true,
+                                               title: "Confirm Reschedule",
+                                               message: `You currently have a slot reserved on ${oldDesc}. Rescheduling will automatically release that slot and lock in ${newDesc}. Are you sure you want to proceed?`,
+                                               confirmLabel: "Yes, Reschedule Slot",
+                                               danger: false,
+                                               onConfirm: () => handleBookSlot()
+                                            });
+                                         } else {
+                                            handleBookSlot();
+                                         }
+                                      };
+
+                                      return (
+                                         <div className="animate-scale-in" style={{ marginTop: '1.25rem', padding: '1.25rem 1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.12), rgba(139,92,246,0.04))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
+                                            <div>
+                                               <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '0.2rem' }}>{hasBooking ? 'Rescheduling review slot' : 'Ready to commit?'}</div>
+                                               <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>{hasBooking ? 'Releases your previous slot and locks this one' : `Lock in this slot for ${myGroup.name}`}</div>
+                                            </div>
+                                            <button onClick={handleConfirmReschedule} disabled={bookingLoading}
+                                               style={{ padding: '0.75rem 1.75rem', background: 'linear-gradient(135deg, var(--primary), #6d28d9)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(139,92,246,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                                               onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                               onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                            >
+                                               {bookingLoading ? <Hourglass size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={15} />}
+                                               {bookingLoading ? 'Securing...' : hasBooking ? 'Reschedule Slot' : 'Lock Slot'}
+                                            </button>
+                                         </div>
+                                      );
+                                   })()}
+
+                                  {selectedSlot && myGroup.leader_id !== user.id && (
                                     <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', background: 'rgba(244,63,94,0.05)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f43f5e', fontSize: '0.85rem', fontWeight: 700 }}>
                                        <Lock size={14} /> Only the group leader can confirm a booking.
                                     </div>
